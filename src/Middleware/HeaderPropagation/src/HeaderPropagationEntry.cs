@@ -1,9 +1,9 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Primitives;
 using System;
 using System.Net.Http;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
 
-namespace Microsoft.Extensions.Http.HeaderPropagation
+namespace Microsoft.AspNetCore.HeaderPropagation
 {
     public class HeaderPropagationEntry
     {

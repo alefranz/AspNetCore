@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
 
-namespace Microsoft.Extensions.Http.HeaderPropagation
+namespace Microsoft.AspNetCore.HeaderPropagation
 {
     public class HeaderPropagationMessageHandler : DelegatingHandler
     {

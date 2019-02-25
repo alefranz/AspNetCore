@@ -1,11 +1,11 @@
 using System;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
-using Microsoft.Extensions.Http.HeaderPropagation;
 using Microsoft.Extensions.Options;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Microsoft.AspNetCore.HeaderPropagation.DependencyInjection
 {
     public static class HeaderPropagationExtensions
     {

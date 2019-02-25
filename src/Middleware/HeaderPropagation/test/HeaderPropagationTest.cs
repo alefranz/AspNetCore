@@ -1,16 +1,15 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Http;
-using Microsoft.Extensions.Http.HeaderPropagation;
-using Microsoft.Extensions.Primitives;
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.HeaderPropagation.DependencyInjection;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Primitives;
 using Xunit;
 
-namespace HeaderPropagation.Tests
+namespace Microsoft.AspNetCore.HeaderPropagation.Tests
 {
     public class HeaderPropagationTest
     {

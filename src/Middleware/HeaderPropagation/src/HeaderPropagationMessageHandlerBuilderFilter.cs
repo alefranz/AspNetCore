@@ -1,8 +1,9 @@
 using System;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Options;
 
-namespace Microsoft.Extensions.Http.HeaderPropagation
+namespace Microsoft.AspNetCore.HeaderPropagation
 {
     internal class HeaderPropagationMessageHandlerBuilderFilter : IHttpMessageHandlerBuilderFilter
     {
