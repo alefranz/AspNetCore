@@ -23,6 +23,9 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
 
             ServiceCollection = new ServiceCollection();
 
+            ContextAccessor = new HttpContextAccessor {HttpContext = new DefaultHttpContext()};
+            ServiceCollection.AddSingleton<IHttpContextAccessor>(ContextAccessor);
+
             HttpClientBuilder = ServiceCollection.AddHttpClient("example.com", c => c.BaseAddress = new Uri("http://example.com"))
                 .ConfigureHttpMessageHandlerBuilder(b =>
                 {
@@ -150,7 +153,7 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
             HttpRequestMessage receivedRequest = null;
             HttpContext receivedContext = null;
             Configuration.DefaultValues = "no";
-            Configuration.DefaultValuesGenerator = () => defaultValues;
+            Configuration.DefaultValuesGenerator = ctx => defaultValues;
 
             HttpClientBuilder.AddHeaderPropagation(o => o.Headers.Add(Configuration));
             var services = ServiceCollection.BuildServiceProvider();
@@ -172,7 +175,7 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
         public async Task AddHeaderPropagation_NoHeaderInRequest_EmptyDefaultValuesGenerated_DoNotAddit()
         {
             // Arrange
-            Configuration.DefaultValuesGenerator = () => StringValues.Empty;
+            Configuration.DefaultValuesGenerator = ctx => StringValues.Empty;
 
             HttpClientBuilder.AddHeaderPropagation(o => o.Headers.Add(Configuration));
             var services = ServiceCollection.BuildServiceProvider();

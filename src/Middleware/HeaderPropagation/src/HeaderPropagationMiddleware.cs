@@ -36,7 +36,7 @@ namespace Microsoft.AspNetCore.HeaderPropagation
                     {
                         if (header.DefaultValuesGenerator != null)
                         {
-                            values = header.DefaultValuesGenerator();
+                            values = header.DefaultValuesGenerator(context);
                             if (StringValues.IsNullOrEmpty(values)) continue;
                         }
                         else if (!StringValues.IsNullOrEmpty(header.DefaultValues))
