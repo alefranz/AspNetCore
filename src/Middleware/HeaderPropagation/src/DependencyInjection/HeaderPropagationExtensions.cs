@@ -1,17 +1,18 @@
 using System;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Options;
 
-namespace Microsoft.AspNetCore.HeaderPropagation.DependencyInjection
+namespace Microsoft.AspNetCore.HeaderPropagation
 {
     public static class HeaderPropagationExtensions
     {
         public static IServiceCollection AddHeaderPropagation(this IServiceCollection services, Action<HeaderPropagationOptions> configure)
         {
-            services.AddHttpContextAccessor();
+            services.TryAddScoped<HeaderPropagationState>();
             services.Configure(configure);
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IHttpMessageHandlerBuilderFilter, HeaderPropagationMessageHandlerBuilderFilter>());
             return services;
@@ -19,17 +20,18 @@ namespace Microsoft.AspNetCore.HeaderPropagation.DependencyInjection
 
         public static IHttpClientBuilder AddHeaderPropagation(this IHttpClientBuilder builder, Action<HeaderPropagationOptions> configure)
         {
-            builder.Services.AddHttpContextAccessor();
+            builder.Services.TryAddScoped<HeaderPropagationState>();
             builder.Services.Configure(configure);
-            builder.AddHttpMessageHandler((sp) =>
-            {
-                var options = sp.GetRequiredService<IOptions<HeaderPropagationOptions>>();
-                var contextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
-
-                return new HeaderPropagationMessageHandler(options.Value, contextAccessor);
-            });
+            builder.Services.TryAddTransient<HeaderPropagationMessageHandler>();
+ 
+            builder.AddHttpMessageHandler<HeaderPropagationMessageHandler>();
 
             return builder;
+        }
+
+        public static IApplicationBuilder UseHeaderPropagation(this IApplicationBuilder builder)
+        {
+            return builder.UseMiddleware<HeaderPropagationMiddleware>();
         }
     }
 }

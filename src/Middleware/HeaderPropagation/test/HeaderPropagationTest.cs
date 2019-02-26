@@ -3,7 +3,6 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.HeaderPropagation.DependencyInjection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
@@ -23,12 +22,6 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
             };
 
             ServiceCollection = new ServiceCollection();
-
-            ContextAccessor = new HttpContextAccessor
-            {
-                HttpContext = new DefaultHttpContext()
-            };
-            ServiceCollection.AddSingleton<IHttpContextAccessor>(ContextAccessor);
 
             HttpClientBuilder = ServiceCollection.AddHttpClient("example.com", c => c.BaseAddress = new Uri("http://example.com"))
                 .ConfigureHttpMessageHandlerBuilder(b =>
@@ -157,12 +150,7 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
             HttpRequestMessage receivedRequest = null;
             HttpContext receivedContext = null;
             Configuration.DefaultValues = "no";
-            Configuration.DefaultValuesGenerator = (req, context) =>
-            {
-                receivedRequest = req;
-                receivedContext = context;
-                return defaultValues;
-            };
+            Configuration.DefaultValuesGenerator = () => defaultValues;
 
             HttpClientBuilder.AddHeaderPropagation(o => o.Headers.Add(Configuration));
             var services = ServiceCollection.BuildServiceProvider();
@@ -184,7 +172,7 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
         public async Task AddHeaderPropagation_NoHeaderInRequest_EmptyDefaultValuesGenerated_DoNotAddit()
         {
             // Arrange
-            Configuration.DefaultValuesGenerator = (req, context) => StringValues.Empty;
+            Configuration.DefaultValuesGenerator = () => StringValues.Empty;
 
             HttpClientBuilder.AddHeaderPropagation(o => o.Headers.Add(Configuration));
             var services = ServiceCollection.BuildServiceProvider();
