@@ -96,6 +96,22 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
             Assert.Equal(new[] { "test2" }, Handler.Headers.GetValues("something"));
         }
 
+        [Fact]
+        public async Task HeaderInState_NoOutputName_UseInputName()
+        {
+            // Arrange
+            var name = "the-one";
+            Options.Headers.Add(new HeaderPropagationEntry { InputName = name });
+            State.Headers.Add(name, "test");
+
+            // Act
+            await Client.SendAsync(new HttpRequestMessage());
+
+            // Assert
+            Assert.True(Handler.Headers.Contains(name));
+            Assert.Equal(new[] { "test" }, Handler.Headers.GetValues(name));
+        }
+
         [Theory]
         [InlineData(null)]
         [InlineData("")]
