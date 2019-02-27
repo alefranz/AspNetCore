@@ -1,9 +1,7 @@
 using System;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.HeaderPropagation
@@ -12,19 +10,22 @@ namespace Microsoft.AspNetCore.HeaderPropagation
     {
         public static IServiceCollection AddHeaderPropagation(this IServiceCollection services, Action<HeaderPropagationOptions> configure)
         {
-            services.TryAddScoped<HeaderPropagationState>();
+            services.TryAddSingleton<HeaderPropagationState>();
             services.Configure(configure);
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IHttpMessageHandlerBuilderFilter, HeaderPropagationMessageHandlerBuilderFilter>());
+
             return services;
         }
 
-        public static IHttpClientBuilder AddHeaderPropagation(this IHttpClientBuilder builder, Action<HeaderPropagationOptions> configure)
+        public static IHttpClientBuilder AddHeaderPropagation(this IHttpClientBuilder builder)
         {
-            builder.Services.TryAddScoped<HeaderPropagationState>();
-            builder.Services.Configure(configure);
+            builder.Services.TryAddSingleton<HeaderPropagationState>();
             builder.Services.TryAddTransient<HeaderPropagationMessageHandler>();
  
-            builder.AddHttpMessageHandler<HeaderPropagationMessageHandler>();
+            builder.AddHttpMessageHandler(services =>
+            {
+                var state = services.GetRequiredService<HeaderPropagationState>();
+                return new HeaderPropagationMessageHandler(services.GetRequiredService<IOptions<HeaderPropagationOptions>>(), state);
+            });
 
             return builder;
         }

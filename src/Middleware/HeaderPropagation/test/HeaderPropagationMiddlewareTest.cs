@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
@@ -25,7 +24,6 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
         public HeaderPropagationOptions Options { get; set; }
         public HeaderPropagationState State { get; set; }
         public HeaderPropagationMiddleware Middleware { get; set; }
-
 
         [Fact]
         public async Task HeaderInRequest_AddCorrectValue()
