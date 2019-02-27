@@ -39,22 +39,22 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
         public async Task HeaderInState_AddCorrectValue()
         {
             // Arrange
-            Options.Headers.Add(new HeaderPropagationEntry { InputName = "in", OutputName = "out" });
-            State.Headers.Add("in", "test");
-            
+            Options.Headers.Add(new HeaderPropagationEntry {OutputName = "out"});
+            State.Headers.Add("out", "test");
+
             // Act
             await Client.SendAsync(new HttpRequestMessage());
 
             // Assert
             Assert.True(Handler.Headers.Contains("out"));
-            Assert.Equal(new[] { "test" }, Handler.Headers.GetValues("out"));
+            Assert.Equal(new[] {"test"}, Handler.Headers.GetValues("out"));
         }
 
         [Fact]
         public async Task NoHeaderInState_DoesNotAddIt()
         {
             // Arrange
-            Options.Headers.Add(new HeaderPropagationEntry { InputName = "in", OutputName = "out" });
+            Options.Headers.Add(new HeaderPropagationEntry {OutputName = "out"});
 
             // Act
             await Client.SendAsync(new HttpRequestMessage());
@@ -67,8 +67,8 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
         public async Task HeaderInState_NotInOptions_DoesNotAddIt()
         {
             // Arrange
-            Options.Headers.Add(new HeaderPropagationEntry { InputName = "no", OutputName = "out" });
-            State.Headers.Add("in", "test");
+            Options.Headers.Add(new HeaderPropagationEntry {OutputName = "out"});
+            State.Headers.Add("out", "test");
 
             // Act
             await Client.SendAsync(new HttpRequestMessage());
@@ -81,9 +81,9 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
         public async Task MultipleHeadersInState_AddsAll()
         {
             // Arrange
-            Options.Headers.Add(new HeaderPropagationEntry { InputName = "in", OutputName = "out" });
-            Options.Headers.Add(new HeaderPropagationEntry { InputName = "another", OutputName = "something" });
-            State.Headers.Add("in", "test");
+            Options.Headers.Add(new HeaderPropagationEntry {OutputName = "out"});
+            Options.Headers.Add(new HeaderPropagationEntry {OutputName = "another"});
+            State.Headers.Add("out", "test");
             State.Headers.Add("another", "test2");
 
             // Act
@@ -91,25 +91,9 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
 
             // Assert
             Assert.True(Handler.Headers.Contains("out"));
-            Assert.True(Handler.Headers.Contains("something"));
-            Assert.Equal(new[] { "test" }, Handler.Headers.GetValues("out"));
-            Assert.Equal(new[] { "test2" }, Handler.Headers.GetValues("something"));
-        }
-
-        [Fact]
-        public async Task HeaderInState_NoOutputName_UseInputName()
-        {
-            // Arrange
-            var name = "the-one";
-            Options.Headers.Add(new HeaderPropagationEntry { InputName = name });
-            State.Headers.Add(name, "test");
-
-            // Act
-            await Client.SendAsync(new HttpRequestMessage());
-
-            // Assert
-            Assert.True(Handler.Headers.Contains(name));
-            Assert.Equal(new[] { "test" }, Handler.Headers.GetValues(name));
+            Assert.True(Handler.Headers.Contains("another"));
+            Assert.Equal(new[] {"test"}, Handler.Headers.GetValues("out"));
+            Assert.Equal(new[] {"test2"}, Handler.Headers.GetValues("another"));
         }
 
         [Theory]
@@ -118,8 +102,8 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
         public async Task HeaderEmptyInState_DoNotAddIt(string headerValue)
         {
             // Arrange
-            Options.Headers.Add(new HeaderPropagationEntry { InputName = "in", OutputName = "out" });
-            State.Headers.Add("in", headerValue);
+            Options.Headers.Add(new HeaderPropagationEntry {OutputName = "out"});
+            State.Headers.Add("out", headerValue);
 
             // Act
             await Client.SendAsync(new HttpRequestMessage());
@@ -129,18 +113,19 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
         }
 
         [Theory]
-        [InlineData(false, "", new[] { "" })]
-        [InlineData(false, null, new[] { "" })]
-        [InlineData(false, "42", new[] { "42" })]
-        [InlineData(true, "42", new[] { "42", "test" })]
-        [InlineData(true, "", new[] { "", "test" })]
-        [InlineData(true, null, new[] { "", "test" })]
-        public async Task HeaderInState_HeaderAlreadyInOutgoingRequest(bool alwaysAdd, string outgoingValue, string[] expectedValues)
+        [InlineData(false, "", new[] {""})]
+        [InlineData(false, null, new[] {""})]
+        [InlineData(false, "42", new[] {"42"})]
+        [InlineData(true, "42", new[] {"42", "test"})]
+        [InlineData(true, "", new[] {"", "test"})]
+        [InlineData(true, null, new[] {"", "test"})]
+        public async Task HeaderInState_HeaderAlreadyInOutgoingRequest(bool alwaysAdd, string outgoingValue,
+            string[] expectedValues)
         {
             // Arrange
-            State.Headers.Add("in", "test");
+            State.Headers.Add("out", "test");
             Options.Headers.Add(
-                new HeaderPropagationEntry {InputName = "in", OutputName = "out", AlwaysAdd = alwaysAdd});
+                new HeaderPropagationEntry {OutputName = "out", AlwaysAdd = alwaysAdd});
 
             var request = new HttpRequestMessage();
             request.Headers.Add("out", outgoingValue);
@@ -157,7 +142,8 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
         {
             public HttpHeaders Headers { get; private set; }
 
-            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
+                CancellationToken cancellationToken)
             {
                 Headers = request.Headers;
                 return Task.FromResult(new HttpResponseMessage());

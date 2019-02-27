@@ -49,7 +49,8 @@ namespace Microsoft.AspNetCore.HeaderPropagation
                         }
                     }
 
-                    _state.Headers.TryAdd(header.OutputName, values);
+                    var outputName = !string.IsNullOrEmpty(header.OutputName) ? header.OutputName : header.InputName;
+                    _state.Headers.TryAdd(outputName, values);
                 }
             }
 

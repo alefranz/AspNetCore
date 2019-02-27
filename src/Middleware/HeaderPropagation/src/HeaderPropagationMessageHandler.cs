@@ -30,13 +30,10 @@ namespace Microsoft.AspNetCore.HeaderPropagation
             foreach (var header in _options.Headers)
             {
                 if (_state.Headers.TryGetValue(header.InputName, out var values) &&
-                    !StringValues.IsNullOrEmpty(values))
+                    !StringValues.IsNullOrEmpty(values) &&
+                    (header.AlwaysAdd || !request.Headers.Contains(header.OutputName)))
                 {
-                    var outputName = !string.IsNullOrEmpty(header.OutputName) ? header.OutputName : header.InputName;
-                    if (header.AlwaysAdd || !request.Headers.Contains(outputName))
-                    {
-                        request.Headers.TryAddWithoutValidation(outputName, (string[]) values);
-                    }
+                    request.Headers.TryAddWithoutValidation(header.OutputName, (string[]) values);
                 }
             }
 
