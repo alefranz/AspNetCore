@@ -67,7 +67,6 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
         public async Task HeaderInState_NotInOptions_DoesNotAddIt()
         {
             // Arrange
-            Options.Headers.Add(new HeaderPropagationEntry {OutputName = "out"});
             State.Headers.Add("out", "test");
 
             // Act

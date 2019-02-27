@@ -29,7 +29,7 @@ namespace Microsoft.AspNetCore.HeaderPropagation
         {
             foreach (var header in _options.Headers)
             {
-                if (_state.Headers.TryGetValue(header.InputName, out var values) &&
+                if (_state.Headers.TryGetValue(header.OutputName, out var values) &&
                     !StringValues.IsNullOrEmpty(values) &&
                     (header.AlwaysAdd || !request.Headers.Contains(header.OutputName)))
                 {
