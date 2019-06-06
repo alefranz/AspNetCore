@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 
@@ -17,10 +18,11 @@ namespace Microsoft.AspNetCore.HeaderPropagation
     public class HeaderPropagationMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly ILogger<HeaderPropagationMiddleware> _logger;
         private readonly HeaderPropagationOptions _options;
         private readonly HeaderPropagationValues _values;
 
-        public HeaderPropagationMiddleware(RequestDelegate next, IOptions<HeaderPropagationOptions> options, HeaderPropagationValues values)
+        public HeaderPropagationMiddleware(RequestDelegate next, IOptions<HeaderPropagationOptions> options, ILogger<HeaderPropagationMiddleware> logger, HeaderPropagationValues values)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
 
@@ -29,6 +31,8 @@ namespace Microsoft.AspNetCore.HeaderPropagation
                 throw new ArgumentNullException(nameof(options));
             }
             _options = options.Value;
+
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             _values = values ?? throw new ArgumentNullException(nameof(values));
         }
@@ -55,8 +59,12 @@ namespace Microsoft.AspNetCore.HeaderPropagation
                     }
                 }
             }
+            var logScope = new HeaderPropagationLogScope(_options.Headers, headers);
 
-            return _next.Invoke(context);
+            using (_logger.BeginScope(logScope))
+            {
+                return _next.Invoke(context);
+            }
         }
 
         private static StringValues GetValue(HttpContext context, HeaderPropagationEntry entry)
