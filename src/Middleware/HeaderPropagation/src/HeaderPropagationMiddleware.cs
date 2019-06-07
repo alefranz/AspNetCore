@@ -21,8 +21,9 @@ namespace Microsoft.AspNetCore.HeaderPropagation
         private readonly ILogger<HeaderPropagationMiddleware> _logger;
         private readonly HeaderPropagationOptions _options;
         private readonly HeaderPropagationValues _values;
+        private readonly IHeaderPropagationLoggingScope _logScope;
 
-        public HeaderPropagationMiddleware(RequestDelegate next, IOptions<HeaderPropagationOptions> options, ILogger<HeaderPropagationMiddleware> logger, HeaderPropagationValues values)
+        public HeaderPropagationMiddleware(RequestDelegate next, IOptions<HeaderPropagationOptions> options, ILogger<HeaderPropagationMiddleware> logger, HeaderPropagationValues values, IHeaderPropagationLoggingScope logScope)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
 
@@ -35,6 +36,8 @@ namespace Microsoft.AspNetCore.HeaderPropagation
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             _values = values ?? throw new ArgumentNullException(nameof(values));
+
+            _logScope = logScope ?? throw new ArgumentNullException(nameof(logScope));
         }
 
         public Task Invoke(HttpContext context)
@@ -59,9 +62,8 @@ namespace Microsoft.AspNetCore.HeaderPropagation
                     }
                 }
             }
-            var logScope = new HeaderPropagationLogScope(_options.Headers, headers);
 
-            using (_logger.BeginScope(logScope))
+            using (_logger.BeginScope(_logScope))
             {
                 return _next.Invoke(context);
             }

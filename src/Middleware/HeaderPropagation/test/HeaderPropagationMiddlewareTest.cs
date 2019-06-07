@@ -1,6 +1,8 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.Collections;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -21,7 +23,9 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
             Middleware = new HeaderPropagationMiddleware(Next,
                 new OptionsWrapper<HeaderPropagationOptions>(Configuration),
                 NullLogger<HeaderPropagationMiddleware>.Instance,
-                State);
+                State,
+                new MockLoggingScope()
+                );
         }
 
         public DefaultHttpContext Context { get; set; }
@@ -178,6 +182,23 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
             // Assert
             Assert.Contains("in", State.Headers.Keys);
             Assert.Equal("Test", State.Headers["in"]);
+        }
+
+        private class MockLoggingScope : IHeaderPropagationLoggingScope
+        {
+            public KeyValuePair<string, object> this[int index] => throw new System.NotImplementedException();
+
+            public int Count => throw new System.NotImplementedException();
+
+            public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+            {
+                throw new System.NotImplementedException();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                throw new System.NotImplementedException();
+            }
         }
     }
 }
