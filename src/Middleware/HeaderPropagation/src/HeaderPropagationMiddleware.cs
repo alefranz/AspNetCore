@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 
@@ -19,8 +20,10 @@ namespace Microsoft.AspNetCore.HeaderPropagation
         private readonly RequestDelegate _next;
         private readonly HeaderPropagationOptions _options;
         private readonly HeaderPropagationValues _values;
+        private readonly ILogger<HeaderPropagationMiddleware> _logger;
+        private readonly HeaderPropagationLoggerScopeBuilder _loggerScopeBuilder;
 
-        public HeaderPropagationMiddleware(RequestDelegate next, IOptions<HeaderPropagationOptions> options, HeaderPropagationValues values)
+        public HeaderPropagationMiddleware(RequestDelegate next, IOptions<HeaderPropagationOptions> options, HeaderPropagationValues values, ILogger<HeaderPropagationMiddleware> logger, HeaderPropagationLoggerScopeBuilder loggerScopeBuilder)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
 
@@ -31,6 +34,10 @@ namespace Microsoft.AspNetCore.HeaderPropagation
             _options = options.Value;
 
             _values = values ?? throw new ArgumentNullException(nameof(values));
+
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            _loggerScopeBuilder = loggerScopeBuilder ?? throw new ArgumentNullException(nameof(loggerScopeBuilder));
         }
 
         public Task Invoke(HttpContext context)
@@ -53,6 +60,14 @@ namespace Microsoft.AspNetCore.HeaderPropagation
                     {
                         headers.Add(entry.CapturedHeaderName, value);
                     }
+                }
+            }
+
+            if (_options.IncludeInLoggerScope)
+            {
+                using (_logger.BeginScope(_loggerScopeBuilder.Build()))
+                {
+                    return _next.Invoke(context);
                 }
             }
 

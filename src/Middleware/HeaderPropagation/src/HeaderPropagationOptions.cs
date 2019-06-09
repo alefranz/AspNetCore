@@ -18,5 +18,11 @@ namespace Microsoft.AspNetCore.HeaderPropagation
         /// over a later entry if they have the same <see cref="HeaderPropagationEntry.CapturedHeaderName"/>.
         /// </remarks>
         public HeaderPropagationEntryCollection Headers { get; set; } = new HeaderPropagationEntryCollection();
+
+        /// <summary>
+        /// Gets or sets if the the headers captured by the <see cref="HeaderPropagationMiddleware"/>
+        /// should be included in the logger scope.
+        /// </summary>
+        public bool IncludeInLoggerScope { get; set; }
     }
 }

@@ -1,8 +1,10 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Xunit;
@@ -17,15 +19,22 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
             Next = ctx => Task.CompletedTask;
             Configuration = new HeaderPropagationOptions();
             State = new HeaderPropagationValues();
+            Logger = new TestLogger<HeaderPropagationMiddleware>();
+
+            var options = new OptionsWrapper<HeaderPropagationOptions>(Configuration);
+
             Middleware = new HeaderPropagationMiddleware(Next,
-                new OptionsWrapper<HeaderPropagationOptions>(Configuration),
-                State);
+                options,
+                State,
+                Logger,
+                new HeaderPropagationLoggerScopeBuilder(options, State));
         }
 
         public DefaultHttpContext Context { get; set; }
         public RequestDelegate Next { get; set; }
         public HeaderPropagationOptions Configuration { get; set; }
         public HeaderPropagationValues State { get; set; }
+        public TestLogger<HeaderPropagationMiddleware> Logger { get; set; }
         public HeaderPropagationMiddleware Middleware { get; set; }
 
         [Fact]
@@ -176,6 +185,48 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
             // Assert
             Assert.Contains("in", State.Headers.Keys);
             Assert.Equal("Test", State.Headers["in"]);
+        }
+
+        [Fact]
+        public async Task IncludeInLoggerScopeIsTrue_AddsScopeToLogger()
+        {
+            // Arrange
+            Configuration.IncludeInLoggerScope = true;
+
+            // Act
+            await Middleware.Invoke(Context);
+
+            // Assert
+            Assert.NotNull(Logger.Scope);
+            Assert.IsType<HeaderPropagationLoggerScope>(Logger.Scope);
+        }
+
+        [Fact]
+        public async Task IncludeInLoggerScopeIsFalse_DoesNotAddScopeToLogger()
+        {
+            // Act
+            await Middleware.Invoke(Context);
+
+            // Assert
+            Assert.Null(Logger.Scope);
+        }
+    }
+
+    public class TestLogger<T> : ILogger<T>
+    {
+        public object Scope { get; private set; }
+
+        public IDisposable BeginScope<TState>(TState state)
+        {
+            Scope = state;
+            return null;
+        }
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        {
         }
     }
 }
