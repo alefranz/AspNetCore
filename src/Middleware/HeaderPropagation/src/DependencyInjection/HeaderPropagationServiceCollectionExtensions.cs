@@ -23,7 +23,7 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             services.TryAddSingleton<HeaderPropagationValues>();
-            services.TryAddSingleton<HeaderPropagationLoggingScopeBuilder>();
+            services.TryAddSingleton<HeaderPropagationLoggerScopeBuilder>();
 
             return services;
         }

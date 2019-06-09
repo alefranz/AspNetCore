@@ -10,13 +10,13 @@ using Microsoft.Extensions.Primitives;
 
 namespace Microsoft.AspNetCore.HeaderPropagation
 {
-    internal class HeaderPropagationLoggingScope : IReadOnlyList<KeyValuePair<string, object>>
+    internal class HeaderPropagationLoggerScope : IReadOnlyList<KeyValuePair<string, object>>
     {
         private readonly List<string> _headerNames;
         private readonly IDictionary<string, StringValues> _headerValues;
         private string _cachedToString;
 
-        public HeaderPropagationLoggingScope(List<string> headerNames, IDictionary<string, StringValues> headerValues)
+        public HeaderPropagationLoggerScope(List<string> headerNames, IDictionary<string, StringValues> headerValues)
         {
             _headerNames = headerNames ?? throw new ArgumentNullException(nameof(headerNames));
             _headerValues = headerValues ?? throw new ArgumentNullException(nameof(headerValues));

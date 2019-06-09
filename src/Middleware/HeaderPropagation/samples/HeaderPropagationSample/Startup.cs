@@ -33,7 +33,7 @@ namespace HeaderPropagationSample
             services.AddHeaderPropagation(options =>
             {
                 // Add the propagated headersto the logging scope.
-                options.IncludeInLoggingScope = true;
+                options.IncludeInLoggerScope = true;
 
                 // Propagate the X-BetaFeatures if present.
                 options.Headers.Add("X-BetaFeatures");

@@ -8,20 +8,20 @@ using Microsoft.Extensions.Options;
 namespace Microsoft.AspNetCore.HeaderPropagation
 {
     /// <summary>
-    /// A builder for generating the logging scope for the <see cref="HeaderPropagationMiddleware"/>.
+    /// A builder for generating the logger scope for the <see cref="HeaderPropagationMiddleware"/>.
     /// </summary>
-    public class HeaderPropagationLoggingScopeBuilder
+    public class HeaderPropagationLoggerScopeBuilder
     {
         private readonly List<string> _headerNames = new List<string>();
         private readonly HeaderPropagationValues _values;
 
         /// <summary>
-        /// Creates a new instance of the <see cref="HeaderPropagationLoggingScopeBuilder"/>.
+        /// Creates a new instance of the <see cref="HeaderPropagationLoggerScopeBuilder"/>.
         /// </summary>
         /// <param name="options">The options that define which headers are propagated.</param>
         /// <param name="values">The values of the headers to be propagated populated by the
         /// <see cref="HeaderPropagationMiddleware"/>.</param>
-        public HeaderPropagationLoggingScopeBuilder(IOptions<HeaderPropagationOptions> options, HeaderPropagationValues values)
+        public HeaderPropagationLoggerScopeBuilder(IOptions<HeaderPropagationOptions> options, HeaderPropagationValues values)
         {
             if (options == null)
             {
@@ -45,6 +45,6 @@ namespace Microsoft.AspNetCore.HeaderPropagation
             }
         }
 
-        internal HeaderPropagationLoggingScope Build() => new HeaderPropagationLoggingScope(_headerNames, _values.Headers);
+        internal HeaderPropagationLoggerScope Build() => new HeaderPropagationLoggerScope(_headerNames, _values.Headers);
     }
 }

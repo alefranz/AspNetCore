@@ -27,7 +27,7 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
                 options,
                 State,
                 Logger,
-                new HeaderPropagationLoggingScopeBuilder(options, State));
+                new HeaderPropagationLoggerScopeBuilder(options, State));
         }
 
         public DefaultHttpContext Context { get; set; }
@@ -188,21 +188,21 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
         }
 
         [Fact]
-        public async Task IncludeInLoggingScopeIsTrue_AddsScopeToLogger()
+        public async Task IncludeInLoggerScopeIsTrue_AddsScopeToLogger()
         {
             // Arrange
-            Configuration.IncludeInLoggingScope = true;
+            Configuration.IncludeInLoggerScope = true;
 
             // Act
             await Middleware.Invoke(Context);
 
             // Assert
             Assert.NotNull(Logger.Scope);
-            Assert.IsType<HeaderPropagationLoggingScope>(Logger.Scope);
+            Assert.IsType<HeaderPropagationLoggerScope>(Logger.Scope);
         }
 
         [Fact]
-        public async Task IncludeInLoggingScopeIsFalse_DoesNotAddScopeToLogger()
+        public async Task IncludeInLoggerScopeIsFalse_DoesNotAddScopeToLogger()
         {
             // Act
             await Middleware.Invoke(Context);

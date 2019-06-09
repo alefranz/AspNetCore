@@ -8,9 +8,9 @@ using Xunit;
 
 namespace Microsoft.AspNetCore.HeaderPropagation.Tests
 {
-    public class HeaderPropagationLoggingScopeBuilderTest
+    public class HeaderPropagationLoggerScopeBuilderTest
     {
-        public HeaderPropagationLoggingScopeBuilderTest()
+        public HeaderPropagationLoggerScopeBuilderTest()
         {
             Options = new HeaderPropagationOptions();
             Values = new HeaderPropagationValues()
@@ -26,7 +26,7 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
         public void NoPropagatedHeaders_EmptyScope()
         {
             // Arrange
-            var builder = new HeaderPropagationLoggingScopeBuilder(
+            var builder = new HeaderPropagationLoggerScopeBuilder(
                 new OptionsWrapper<HeaderPropagationOptions>(Options),
                 Values);
 
@@ -49,7 +49,7 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
                 Options.Headers.Add("foo");
             }
             Values.Headers.Add("foo", "bar");
-            var builder = new HeaderPropagationLoggingScopeBuilder(
+            var builder = new HeaderPropagationLoggerScopeBuilder(
                 new OptionsWrapper<HeaderPropagationOptions>(Options),
                 Values);
 

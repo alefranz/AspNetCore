@@ -20,12 +20,10 @@ namespace Microsoft.AspNetCore.HeaderPropagation
         private readonly RequestDelegate _next;
         private readonly HeaderPropagationOptions _options;
         private readonly HeaderPropagationValues _values;
-
-        // Used only when _options.IncludeInLoggingScope is true
         private readonly ILogger<HeaderPropagationMiddleware> _logger;
-        private readonly HeaderPropagationLoggingScopeBuilder _loggingScopeBuilder;
+        private readonly HeaderPropagationLoggerScopeBuilder _loggerScopeBuilder;
 
-        public HeaderPropagationMiddleware(RequestDelegate next, IOptions<HeaderPropagationOptions> options, HeaderPropagationValues values, ILogger<HeaderPropagationMiddleware> logger, HeaderPropagationLoggingScopeBuilder loggingScopeBuilder)
+        public HeaderPropagationMiddleware(RequestDelegate next, IOptions<HeaderPropagationOptions> options, HeaderPropagationValues values, ILogger<HeaderPropagationMiddleware> logger, HeaderPropagationLoggerScopeBuilder loggerScopeBuilder)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
 
@@ -39,7 +37,7 @@ namespace Microsoft.AspNetCore.HeaderPropagation
 
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            _loggingScopeBuilder = loggingScopeBuilder ?? throw new ArgumentNullException(nameof(loggingScopeBuilder));
+            _loggerScopeBuilder = loggerScopeBuilder ?? throw new ArgumentNullException(nameof(loggerScopeBuilder));
         }
 
         public Task Invoke(HttpContext context)
@@ -65,9 +63,9 @@ namespace Microsoft.AspNetCore.HeaderPropagation
                 }
             }
 
-            if (_options.IncludeInLoggingScope)
+            if (_options.IncludeInLoggerScope)
             {
-                using (_logger.BeginScope(_loggingScopeBuilder.Build()))
+                using (_logger.BeginScope(_loggerScopeBuilder.Build()))
                 {
                     return _next.Invoke(context);
                 }

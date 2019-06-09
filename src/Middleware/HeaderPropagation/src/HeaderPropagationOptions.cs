@@ -21,8 +21,8 @@ namespace Microsoft.AspNetCore.HeaderPropagation
 
         /// <summary>
         /// Gets or sets if the the headers captured by the <see cref="HeaderPropagationMiddleware"/>
-        /// should be included in the logging scope.
+        /// should be included in the logger scope.
         /// </summary>
-        public bool IncludeInLoggingScope { get; set; }
+        public bool IncludeInLoggerScope { get; set; }
     }
 }

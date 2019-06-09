@@ -7,7 +7,7 @@ using Xunit;
 
 namespace Microsoft.AspNetCore.HeaderPropagation.Tests
 {
-    public class HeaderPropagationLoggingScopeTest
+    public class HeaderPropagationLoggerScopeTest
     {
         [Fact]
         public void NoPropagatedHeaders_EmptyScope()
@@ -17,7 +17,7 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
             var headerValues = new Dictionary<string, StringValues>();
 
             // Act
-            var scope = new HeaderPropagationLoggingScope(headerNames, headerValues);
+            var scope = new HeaderPropagationLoggerScope(headerNames, headerValues);
 
             // Assert
             Assert.Empty(scope);
@@ -32,7 +32,7 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
             var headerValues = new Dictionary<string, StringValues> { ["foo"] = "bar" };
 
             // Act
-            var scope = new HeaderPropagationLoggingScope(headerNames, headerValues);
+            var scope = new HeaderPropagationLoggerScope(headerNames, headerValues);
 
             // Assert
             Assert.Single(scope);
@@ -51,7 +51,7 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
             var headerValues = new Dictionary<string, StringValues>();
 
             // Act
-            var scope = new HeaderPropagationLoggingScope(headerNames, headerValues);
+            var scope = new HeaderPropagationLoggerScope(headerNames, headerValues);
 
             // Assert
             Assert.Single(scope);
@@ -73,7 +73,7 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
             };
 
             // Act
-            var scope = new HeaderPropagationLoggingScope(headerNames, headerValues);
+            var scope = new HeaderPropagationLoggerScope(headerNames, headerValues);
 
             // Assert
             Assert.Equal(2, scope.Count);
