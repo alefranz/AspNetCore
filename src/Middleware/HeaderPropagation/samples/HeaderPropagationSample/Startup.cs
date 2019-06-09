@@ -32,6 +32,9 @@ namespace HeaderPropagationSample
             // It's also easy to forward a header with a different name, using Add(string, string)
             services.AddHeaderPropagation(options =>
             {
+                // Add the propagated headersto the logging scope.
+                options.IncludeInLoggingScope = true;
+
                 // Propagate the X-BetaFeatures if present.
                 options.Headers.Add("X-BetaFeatures");
 

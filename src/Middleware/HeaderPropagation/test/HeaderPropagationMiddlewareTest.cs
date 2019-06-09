@@ -1,11 +1,10 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Xunit;
@@ -20,18 +19,22 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
             Next = ctx => Task.CompletedTask;
             Configuration = new HeaderPropagationOptions();
             State = new HeaderPropagationValues();
+            Logger = new TestLogger<HeaderPropagationMiddleware>();
+
+            var options = new OptionsWrapper<HeaderPropagationOptions>(Configuration);
+
             Middleware = new HeaderPropagationMiddleware(Next,
-                new OptionsWrapper<HeaderPropagationOptions>(Configuration),
-                NullLogger<HeaderPropagationMiddleware>.Instance,
+                options,
                 State,
-                new MockLoggingScope()
-                );
+                Logger,
+                new HeaderPropagationLoggingScopeBuilder(options, State));
         }
 
         public DefaultHttpContext Context { get; set; }
         public RequestDelegate Next { get; set; }
         public HeaderPropagationOptions Configuration { get; set; }
         public HeaderPropagationValues State { get; set; }
+        public TestLogger<HeaderPropagationMiddleware> Logger { get; set; }
         public HeaderPropagationMiddleware Middleware { get; set; }
 
         [Fact]
@@ -184,21 +187,46 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
             Assert.Equal("Test", State.Headers["in"]);
         }
 
-        private class MockLoggingScope : IHeaderPropagationLoggingScope
+        [Fact]
+        public async Task IncludeInLoggingScopeIsTrue_AddsScopeToLogger()
         {
-            public KeyValuePair<string, object> this[int index] => throw new System.NotImplementedException();
+            // Arrange
+            Configuration.IncludeInLoggingScope = true;
 
-            public int Count => throw new System.NotImplementedException();
+            // Act
+            await Middleware.Invoke(Context);
 
-            public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
-            {
-                throw new System.NotImplementedException();
-            }
+            // Assert
+            Assert.NotNull(Logger.Scope);
+            Assert.IsType<HeaderPropagationLoggingScope>(Logger.Scope);
+        }
 
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                throw new System.NotImplementedException();
-            }
+        [Fact]
+        public async Task IncludeInLoggingScopeIsFalse_DoesNotAddScopeToLogger()
+        {
+            // Act
+            await Middleware.Invoke(Context);
+
+            // Assert
+            Assert.Null(Logger.Scope);
+        }
+    }
+
+    public class TestLogger<T> : ILogger<T>
+    {
+        public object Scope { get; private set; }
+
+        public IDisposable BeginScope<TState>(TState state)
+        {
+            Scope = state;
+            return null;
+        }
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        {
         }
     }
 }

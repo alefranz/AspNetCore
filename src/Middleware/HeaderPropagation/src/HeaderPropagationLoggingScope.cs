@@ -1,41 +1,25 @@
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 
 namespace Microsoft.AspNetCore.HeaderPropagation
 {
-    public class HeaderPropagationLoggingScope : IHeaderPropagationLoggingScope
+    internal class HeaderPropagationLoggingScope : IReadOnlyList<KeyValuePair<string, object>>
     {
         private readonly List<string> _headerNames;
-        private readonly HeaderPropagationValues _values;
+        private readonly IDictionary<string, StringValues> _headerValues;
         private string _cachedToString;
 
-        public HeaderPropagationLoggingScope(IOptions<HeaderPropagationOptions> options, HeaderPropagationValues values)
+        public HeaderPropagationLoggingScope(List<string> headerNames, IDictionary<string, StringValues> headerValues)
         {
-            if (options == null)
-            {
-                throw new ArgumentNullException(nameof(options));
-            }
-
-            var headers = options.Value.Headers;
-            var uniqueHeaderNames = new HashSet<string>();
-            // Perf: not using directly the HashSet so we can iterate without allocating an enumerator.
-            _headerNames = new List<string>();
-
-            // Perf: avoiding foreach since we don't define a struct-enumerator.
-            for (var i=0; i < headers.Count; i++)
-            {
-                var headerName = headers[i].CapturedHeaderName;
-                if (uniqueHeaderNames.Add(headerName))
-                {
-                    _headerNames.Add(headerName);
-                }
-            }
-
-            _values = values ?? throw new ArgumentNullException(nameof(values));
+            _headerNames = headerNames ?? throw new ArgumentNullException(nameof(headerNames));
+            _headerValues = headerValues ?? throw new ArgumentNullException(nameof(headerValues));
         }
 
         public int Count => _headerNames.Count;
@@ -45,7 +29,7 @@ namespace Microsoft.AspNetCore.HeaderPropagation
             get
             {
                 var headerName = _headerNames[index];
-                _values.Headers.TryGetValue(headerName, out var value);
+                _headerValues.TryGetValue(headerName, out var value);
                 return new KeyValuePair<string, object>(headerName, value);
             }
         }
@@ -74,7 +58,7 @@ namespace Microsoft.AspNetCore.HeaderPropagation
                     if (i > 0) sb.Append(' ');
 
                     var headerName = _headerNames[i];
-                    _values.Headers.TryGetValue(headerName, out var value);
+                    _headerValues.TryGetValue(headerName, out var value);
 
                     sb.Append(string.Format(
                         CultureInfo.InvariantCulture,

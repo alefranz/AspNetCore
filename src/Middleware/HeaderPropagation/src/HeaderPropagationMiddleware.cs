@@ -18,12 +18,14 @@ namespace Microsoft.AspNetCore.HeaderPropagation
     public class HeaderPropagationMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly ILogger<HeaderPropagationMiddleware> _logger;
         private readonly HeaderPropagationOptions _options;
         private readonly HeaderPropagationValues _values;
-        private readonly IHeaderPropagationLoggingScope _logScope;
 
-        public HeaderPropagationMiddleware(RequestDelegate next, IOptions<HeaderPropagationOptions> options, ILogger<HeaderPropagationMiddleware> logger, HeaderPropagationValues values, IHeaderPropagationLoggingScope logScope)
+        // Used only when _options.IncludeInLoggingScope is true
+        private readonly ILogger<HeaderPropagationMiddleware> _logger;
+        private readonly HeaderPropagationLoggingScopeBuilder _loggingScopeBuilder;
+
+        public HeaderPropagationMiddleware(RequestDelegate next, IOptions<HeaderPropagationOptions> options, HeaderPropagationValues values, ILogger<HeaderPropagationMiddleware> logger, HeaderPropagationLoggingScopeBuilder loggingScopeBuilder)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
 
@@ -33,11 +35,11 @@ namespace Microsoft.AspNetCore.HeaderPropagation
             }
             _options = options.Value;
 
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
             _values = values ?? throw new ArgumentNullException(nameof(values));
 
-            _logScope = logScope ?? throw new ArgumentNullException(nameof(logScope));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            _loggingScopeBuilder = loggingScopeBuilder ?? throw new ArgumentNullException(nameof(loggingScopeBuilder));
         }
 
         public Task Invoke(HttpContext context)
@@ -63,10 +65,15 @@ namespace Microsoft.AspNetCore.HeaderPropagation
                 }
             }
 
-            using (_logger.BeginScope(_logScope))
+            if (_options.IncludeInLoggingScope)
             {
-                return _next.Invoke(context);
+                using (_logger.BeginScope(_loggingScopeBuilder.Build()))
+                {
+                    return _next.Invoke(context);
+                }
             }
+
+            return _next.Invoke(context);
         }
 
         private static StringValues GetValue(HttpContext context, HeaderPropagationEntry entry)
