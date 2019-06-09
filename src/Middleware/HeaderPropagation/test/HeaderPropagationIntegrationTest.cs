@@ -170,10 +170,10 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
             var loggingProvider = new LoggerProvider();
             var builder = CreateBuilder(c =>
                 {
-                    c.IncludeInLoggerScope = true;
                     c.Headers.Add("foo");
                 },
-                handler)
+                handler,
+                includeInLoggerScope: true)
                 .ConfigureLogging((_, logging) => logging.AddProvider(loggingProvider));
             var server = new TestServer(builder);
             var client = server.CreateClient();
@@ -197,12 +197,16 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
             Assert.Equal("bar", (StringValues)entry.Value);
         }
 
-        private IWebHostBuilder CreateBuilder(Action<HeaderPropagationOptions> configure, HttpMessageHandler primaryHandler, Action<HeaderPropagationMessageHandlerOptions> configureClient = null)
+        private IWebHostBuilder CreateBuilder(
+            Action<HeaderPropagationOptions> configure,
+            HttpMessageHandler primaryHandler,
+            Action<HeaderPropagationMessageHandlerOptions> configureClient = null,
+            bool includeInLoggerScope = false)
         {
             return new WebHostBuilder()
                 .Configure(app =>
                 {
-                    app.UseHeaderPropagation();
+                    app.UseHeaderPropagation(includeInLoggerScope);
                     app.UseMiddleware<SimpleMiddleware>();
                 })
                 .ConfigureServices(services =>

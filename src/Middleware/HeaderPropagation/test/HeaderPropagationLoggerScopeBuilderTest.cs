@@ -26,9 +26,7 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
         public void NoPropagatedHeaders_EmptyScope()
         {
             // Arrange
-            var builder = new HeaderPropagationLoggerScopeBuilder(
-                new OptionsWrapper<HeaderPropagationOptions>(Options),
-                Values);
+            IHeaderPropagationLoggerScopeBuilder builder = CreateBuilder();
 
             // Act
             var scope = builder.Build();
@@ -49,7 +47,7 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
                 Options.Headers.Add("foo");
             }
             Values.Headers.Add("foo", "bar");
-            var builder = new HeaderPropagationLoggerScopeBuilder(
+            IHeaderPropagationLoggerScopeBuilder builder = new HeaderPropagationLoggerScopeBuilder(
                 new OptionsWrapper<HeaderPropagationOptions>(Options),
                 Values);
 
@@ -64,5 +62,9 @@ namespace Microsoft.AspNetCore.HeaderPropagation.Tests
             Assert.Equal("bar", (StringValues)entry.Value);
             Assert.Equal("foo:bar", scope.ToString());
         }
+
+        private IHeaderPropagationLoggerScopeBuilder CreateBuilder() =>
+            new HeaderPropagationLoggerScopeBuilder(new OptionsWrapper<HeaderPropagationOptions>(Options), Values);
+
     }
 }

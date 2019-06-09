@@ -7,10 +7,11 @@ using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.HeaderPropagation
 {
+
     /// <summary>
     /// A builder to build the <see cref="HeaderPropagationLoggerScope"/> for the <see cref="HeaderPropagationMiddleware"/>.
     /// </summary>
-    public class HeaderPropagationLoggerScopeBuilder
+    internal class HeaderPropagationLoggerScopeBuilder : IHeaderPropagationLoggerScopeBuilder
     {
         private readonly List<string> _headerNames = new List<string>();
         private readonly HeaderPropagationValues _values;
@@ -33,7 +34,7 @@ namespace Microsoft.AspNetCore.HeaderPropagation
 
             var uniqueHeaderNames = new HashSet<string>();
 
-            // Perf: not using directly the HashSet so we can avoid allocating an enumerator
+            // Perf: not using directly the HashSet so we can iterate without allocating an enumerator
             // and avoiding foreach since we don't define a struct-enumerator.
             for (var i = 0; i < headers.Count; i++)
             {
@@ -48,6 +49,7 @@ namespace Microsoft.AspNetCore.HeaderPropagation
         /// <summary>
         /// Build the <see cref="HeaderPropagationLoggerScope"/> for the current async context.
         /// </summary>
-        internal HeaderPropagationLoggerScope Build() => new HeaderPropagationLoggerScope(_headerNames, _values.Headers);
+        HeaderPropagationLoggerScope IHeaderPropagationLoggerScopeBuilder.Build() =>
+            new HeaderPropagationLoggerScope(_headerNames, _values.Headers);
     }
 }

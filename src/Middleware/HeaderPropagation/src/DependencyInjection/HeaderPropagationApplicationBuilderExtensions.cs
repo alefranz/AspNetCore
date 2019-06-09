@@ -5,6 +5,8 @@ using System;
 using System.Net.Http;
 using Microsoft.AspNetCore.HeaderPropagation;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.Builder
 {
@@ -14,6 +16,25 @@ namespace Microsoft.AspNetCore.Builder
             "Unable to find the required services. Please add all the required services by calling '{0}.{1}' inside the call to 'ConfigureServices(...)' in the application startup code.",
             nameof(IServiceCollection),
             nameof(HeaderPropagationServiceCollectionExtensions.AddHeaderPropagation));
+
+        /// <summary>
+        /// Adds a middleware that collect headers to be propagated to a <see cref="HttpClient"/>.
+        /// </summary>
+        /// <param name="app">The <see cref="IApplicationBuilder"/> to add the middleware to.</param>
+        /// <param name="includeInLoggerScope">Includes the captured headers in the logger scope.</param>
+        /// <returns>A reference to the <paramref name="app"/> after the operation has completed.</returns>
+        public static IApplicationBuilder UseHeaderPropagation(this IApplicationBuilder app, bool includeInLoggerScope)
+        {
+            app.UseHeaderPropagation();
+
+            var loggerScopeBuilder = new HeaderPropagationLoggerScopeBuilder(
+                app.ApplicationServices.GetRequiredService<IOptions<HeaderPropagationOptions>>(),
+                app.ApplicationServices.GetRequiredService<HeaderPropagationValues>());
+
+            return app.UseMiddleware<HeaderPropagationLoggerScopeMiddleware>(
+                app.ApplicationServices.GetRequiredService<ILogger<HeaderPropagationLoggerScopeMiddleware>>(),
+                loggerScopeBuilder);
+        }
 
         /// <summary>
         /// Adds a middleware that collect headers to be propagated to a <see cref="HttpClient"/>.
