@@ -13,7 +13,7 @@ namespace Microsoft.AspNetCore.Mvc
     /// <summary>
     /// Specifies the parameters necessary for setting appropriate headers in response caching.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
     public class ResponseCacheAttribute : Attribute, IFilterFactory, IOrderedFilter
     {
         // A nullable-int cannot be used as an Attribute parameter.
@@ -71,6 +71,14 @@ namespace Microsoft.AspNetCore.Mvc
         /// Gets or sets the value of the cache profile name.
         /// </summary>
         public string CacheProfileName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the status codes for which apply the cache headers.
+        /// </summary>
+        /// <remarks>
+        /// When not specified or empty, the headers are always added.
+        /// </remarks>
+        public int[] ApplyForStatusCodes { get; set; }
 
         /// <inheritdoc />
         public int Order { get; set; }

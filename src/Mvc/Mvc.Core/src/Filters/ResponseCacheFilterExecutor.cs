@@ -17,6 +17,7 @@ namespace Microsoft.AspNetCore.Mvc.Filters
         private bool? _cacheNoStore;
         private string _cacheVaryByHeader;
         private string[] _cacheVaryByQueryKeys;
+        private int[] _applyForStatusCodes;
 
         public ResponseCacheFilterExecutor(CacheProfile cacheProfile)
         {
@@ -59,6 +60,8 @@ namespace Microsoft.AspNetCore.Mvc.Filters
             {
                 throw new ArgumentNullException(nameof(context));
             }
+
+            var code = context.HttpContext.Response.StatusCode;
 
             if (!NoStore)
             {

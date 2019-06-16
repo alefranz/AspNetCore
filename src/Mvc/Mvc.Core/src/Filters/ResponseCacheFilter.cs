@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 
 namespace Microsoft.AspNetCore.Mvc.Filters
@@ -79,17 +80,38 @@ namespace Microsoft.AspNetCore.Mvc.Filters
             set => _executor.VaryByQueryKeys = value;
         }
 
+        /// <summary>
+        /// Gets or sets the status codes for which apply the cache headers.
+        /// </summary>
+        /// <remarks>
+        /// When not specified or empty, the headers are always added.
+        /// </remarks>
+        public int[] ApplyForStatusCodes
+        {
+            get; set;
+        }
+
         /// <inheritdoc />
         public void OnActionExecuting(ActionExecutingContext context)
+        {
+        }
+
+        /// <inheritdoc />
+        public void OnActionExecuted(ActionExecutedContext context)
         {
             if (context == null)
             {
                 throw new ArgumentNullException(nameof(context));
             }
 
+            if (!IsApplicable(context))
+            {
+                return;
+            }
+
             // If there are more filters which can override the values written by this filter,
             // then skip execution of this filter.
-            var effectivePolicy = context.FindEffectivePolicy<IResponseCacheFilter>();
+            var effectivePolicy = FindEffectivePolicy(context.Filters, context);
             if (effectivePolicy != null && effectivePolicy != this)
             {
                 _logger.NotMostEffectiveFilter(GetType(), effectivePolicy.GetType(), typeof(IResponseCacheFilter));
@@ -99,9 +121,48 @@ namespace Microsoft.AspNetCore.Mvc.Filters
             _executor.Execute(context);
         }
 
-        /// <inheritdoc />
-        public void OnActionExecuted(ActionExecutedContext context)
+        private bool IsApplicable(ActionExecutedContext context)
         {
+            if (ApplyForStatusCodes == null || ApplyForStatusCodes.Length == 0)
+            {
+                return true;
+            }
+
+            for (var i = 0; i < ApplyForStatusCodes.Length; i++)
+            {
+                if (context.HttpContext.Response.StatusCode == ApplyForStatusCodes[i])
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private IResponseCacheFilter FindEffectivePolicy(IList<IFilterMetadata> filters, ActionExecutedContext context)
+        {
+            // The most specific policy is the one closest to the action (nearest the end of the list).
+            for (var i = filters.Count - 1; i >= 0; i--)
+            {
+                var filter = filters[i];
+                if (filter is IResponseCacheFilter genericResponseCacheFilter)
+                {
+                    if (genericResponseCacheFilter is ResponseCacheFilter responseCacheFilter)
+                    {
+                        // Find the most specific filter which is applicable for the current context
+                        if (responseCacheFilter.IsApplicable(context))
+                        {
+                            return responseCacheFilter;
+                        }
+                    }
+                    else
+                    {
+                        // if the most specific IResponseCacheFilter is not a ResponseCacheFilter, it is the most effective
+                        return genericResponseCacheFilter;
+                    }
+                }
+            }
+
+            return null;
         }
     }
 }
