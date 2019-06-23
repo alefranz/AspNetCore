@@ -574,7 +574,7 @@ namespace Microsoft.AspNetCore.Mvc.ApiExplorer
                 for (var i = 0; i < metadataPropertiesCount; i++)
                 {
                     var propertyMetadata = metadataProperties[i];
-                    var key = new PropertyKey(propertyMetadata, newContainerName, source);
+                    var key = new PropertyKey(propertyMetadata, source);
                     var bindingInfo = BindingInfo.GetBindingInfo(Enumerable.Empty<object>(), propertyMetadata);
 
                     var propertyContext = ApiParameterDescriptionContext.GetContext(
@@ -585,6 +585,7 @@ namespace Microsoft.AspNetCore.Mvc.ApiExplorer
                     if (Visited.Add(key))
                     {
                         Visit(propertyContext, source ?? ambientSource, newContainerName);
+                        Visited.Remove(key);
                     }
                     else
                     {
@@ -628,15 +629,11 @@ namespace Microsoft.AspNetCore.Mvc.ApiExplorer
 
                 public readonly string PropertyName;
 
-                public readonly string ContainerName;
-
                 public readonly BindingSource Source;
-
-                public PropertyKey(ModelMetadata metadata, string containerName, BindingSource source)
+                public PropertyKey(ModelMetadata metadata, BindingSource source)
                 {
                     ContainerType = metadata.ContainerType;
                     PropertyName = metadata.PropertyName;
-                    ContainerName = containerName;
                     Source = source;
                 }
             }
@@ -648,7 +645,6 @@ namespace Microsoft.AspNetCore.Mvc.ApiExplorer
                     return
                         x.ContainerType == y.ContainerType &&
                         x.PropertyName == y.PropertyName &&
-                        x.ContainerName == y.ContainerName &&
                         x.Source == y.Source;
                 }
 
@@ -657,7 +653,6 @@ namespace Microsoft.AspNetCore.Mvc.ApiExplorer
                     var hashCodeCombiner = HashCodeCombiner.Start();
                     hashCodeCombiner.Add(obj.ContainerType);
                     hashCodeCombiner.Add(obj.PropertyName);
-                    hashCodeCombiner.Add(obj.ContainerName);
                     hashCodeCombiner.Add(obj.Source);
                     return hashCodeCombiner.CombinedHash;
                 }

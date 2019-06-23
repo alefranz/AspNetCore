@@ -1514,7 +1514,7 @@ namespace Microsoft.AspNetCore.Mvc.Description
         }
 
         [Fact]
-        public void GetApiDescription_ParameterDescription_DuplicatePropertiesWithChildren_Nested_ExpandBoth()
+        public void GetApiDescription_ParameterDescription_DuplicatePropertiesWithChildren_Nested_ExpandAll()
         {
             // Arrange
             var action = CreateActionDescriptor(nameof(AcceptsMultiplePropertiesNested));
