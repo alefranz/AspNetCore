@@ -153,6 +153,9 @@ namespace Microsoft.AspNetCore.Mvc
 
         private static readonly Action<ILogger, Type, int?, Type, Exception> _transformingClientError;
 
+        private static readonly Action<ILogger, string, Exception> _controllerFactoryExecuting;
+        private static readonly Action<ILogger, string, Exception> _controllerFactoryExecuted;
+
         static MvcCoreLoggerExtensions()
         {
             _actionExecuting = LoggerMessage.Define<string, string>(
@@ -660,6 +663,16 @@ namespace Microsoft.AspNetCore.Mvc
                 LogLevel.Trace,
                 new EventId(49, "ClientErrorResultFilter"),
                 "Replacing {InitialActionResultType} with status code {StatusCode} with {ReplacedActionResultType}.");
+
+            _controllerFactoryExecuting = LoggerMessage.Define<string>(
+                LogLevel.Debug,
+                new EventId(1, "ControllerFactoryExecuting"),
+                "Executing controller factory for '{ControllerType}'");
+
+            _controllerFactoryExecuted = LoggerMessage.Define<string>(
+                LogLevel.Debug,
+                new EventId(2, "ControllerFactoryExecuted"),
+                "Executed controller factory for '{ControllerType}'");
         }
 
         public static void RegisteredOutputFormatters(this ILogger logger, IEnumerable<IOutputFormatter> outputFormatters)
@@ -1621,6 +1634,16 @@ namespace Microsoft.AspNetCore.Mvc
             }
 
             _logFilterExecutionPlan(logger, filterType, filterList, null);
+        }
+
+        public static void ExecutingControllerFactory(this ILogger logger, ControllerContext context)
+        {
+            _controllerFactoryExecuting(logger, context.ActionDescriptor.ControllerTypeInfo.FullName, null);
+        }
+
+        public static void ExecutedControllerFactory(this ILogger logger, ControllerContext context)
+        {
+            _controllerFactoryExecuting(logger, context.ActionDescriptor.ControllerTypeInfo.FullName, null);
         }
 
         private static string[] GetFilterList(IEnumerable<IFilterMetadata> filters)

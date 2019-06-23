@@ -69,6 +69,36 @@ namespace Microsoft.AspNetCore.Mvc.Controllers
         }
 
         [Fact]
+        public void CreateActivator()
+        {
+            // Arrange
+            var activator = new DefaultControllerActivator(Mock.Of<ITypeActivatorCache>());
+            var activatorProvider = new ControllerActivatorProvider(activator);
+            var descriptor = new ControllerActionDescriptor
+            {
+                ControllerTypeInfo = typeof(TestController).GetTypeInfo(),
+            };
+            var serviceProvider = new ServiceCollection()
+                .AddTransient<TestService>()
+                .BuildServiceProvider();
+            var context = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    RequestServices = serviceProvider,
+                },
+            };
+
+            // Act
+            var activatorDelegate = activatorProvider.CreateActivator(descriptor);
+            var result = activatorDelegate(context);
+
+            // Assert
+            var actual = Assert.IsType<TestController>(result);
+            Assert.NotNull(actual.TestService);
+        }
+
+        [Fact]
         public void CreateReleaser_InvokesIControllerActivator_IfItIsNotDefaultControllerActivator()
         {
             // Arrange
@@ -151,7 +181,10 @@ namespace Microsoft.AspNetCore.Mvc.Controllers
 
         private class TestService
         {
+            public TestService()
+            {
 
+            }
         }
     }
 }
