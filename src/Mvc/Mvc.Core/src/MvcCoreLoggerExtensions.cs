@@ -30,6 +30,9 @@ namespace Microsoft.AspNetCore.Mvc
 
         private static readonly double TimestampToTicks = TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency;
 
+        private static readonly Action<ILogger, string, string, Exception> _controllerFactoryExecuting;
+        private static readonly Action<ILogger, string, string, Exception> _controllerFactoryExecuted;
+
         private static readonly Action<ILogger, string, string, Exception> _actionExecuting;
         private static readonly Action<ILogger, string, MethodInfo, string, string, Exception> _controllerActionExecuting;
         private static readonly Action<ILogger, string, double, Exception> _actionExecuted;
@@ -153,11 +156,18 @@ namespace Microsoft.AspNetCore.Mvc
 
         private static readonly Action<ILogger, Type, int?, Type, Exception> _transformingClientError;
 
-        private static readonly Action<ILogger, string, Exception> _controllerFactoryExecuting;
-        private static readonly Action<ILogger, string, Exception> _controllerFactoryExecuted;
-
         static MvcCoreLoggerExtensions()
         {
+            _controllerFactoryExecuting = LoggerMessage.Define<string, string>(
+                LogLevel.Debug,
+                new EventId(1, "ControllerFactoryExecuting"),
+                "Executing controller factory for controller {Controller} ({AssemblyName})");
+
+            _controllerFactoryExecuted = LoggerMessage.Define<string, string>(
+                LogLevel.Debug,
+                new EventId(2, "ControllerFactoryExecuted"),
+                "Executed controller factory for controller {Controller} ({AssemblyName})");
+
             _actionExecuting = LoggerMessage.Define<string, string>(
                 LogLevel.Information,
                 new EventId(1, "ActionExecuting"),
@@ -663,16 +673,6 @@ namespace Microsoft.AspNetCore.Mvc
                 LogLevel.Trace,
                 new EventId(49, "ClientErrorResultFilter"),
                 "Replacing {InitialActionResultType} with status code {StatusCode} with {ReplacedActionResultType}.");
-
-            _controllerFactoryExecuting = LoggerMessage.Define<string>(
-                LogLevel.Debug,
-                new EventId(1, "ControllerFactoryExecuting"),
-                "Executing controller factory for '{ControllerType}'");
-
-            _controllerFactoryExecuted = LoggerMessage.Define<string>(
-                LogLevel.Debug,
-                new EventId(2, "ControllerFactoryExecuted"),
-                "Executed controller factory for '{ControllerType}'");
         }
 
         public static void RegisteredOutputFormatters(this ILogger logger, IEnumerable<IOutputFormatter> outputFormatters)
@@ -1638,12 +1638,26 @@ namespace Microsoft.AspNetCore.Mvc
 
         public static void ExecutingControllerFactory(this ILogger logger, ControllerContext context)
         {
-            _controllerFactoryExecuting(logger, context.ActionDescriptor.ControllerTypeInfo.FullName, null);
+            if (!logger.IsEnabled(LogLevel.Debug))
+            {
+                return;
+            }
+
+            var controllerType = context.ActionDescriptor.ControllerTypeInfo.AsType();
+            var controllerName = TypeNameHelper.GetTypeDisplayName(controllerType);
+            _controllerFactoryExecuting(logger, controllerName, controllerType.Assembly.GetName().Name, null);
         }
 
         public static void ExecutedControllerFactory(this ILogger logger, ControllerContext context)
         {
-            _controllerFactoryExecuting(logger, context.ActionDescriptor.ControllerTypeInfo.FullName, null);
+            if (!logger.IsEnabled(LogLevel.Debug))
+            {
+                return;
+            }
+
+            var controllerType = context.ActionDescriptor.ControllerTypeInfo.AsType();
+            var controllerName = TypeNameHelper.GetTypeDisplayName(controllerType);
+            _controllerFactoryExecuted(logger, controllerName, controllerType.Assembly.GetName().Name, null);
         }
 
         private static string[] GetFilterList(IEnumerable<IFilterMetadata> filters)

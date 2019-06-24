@@ -70,8 +70,6 @@ namespace Microsoft.AspNetCore.Mvc.Infrastructure
 
                         _logger.ExecutedControllerFactory(controllerContext);
 
-                        _instance = _cacheEntry.ControllerFactory(controllerContext);
-
                         _arguments = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
                         var task = BindArgumentsAsync();

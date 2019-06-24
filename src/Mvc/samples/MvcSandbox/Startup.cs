@@ -106,7 +106,7 @@ namespace MvcSandbox
                 .UseContentRoot(Directory.GetCurrentDirectory())
                 .ConfigureLogging(factory =>
                 {
-                    factory
+                    factory.SetMinimumLevel(LogLevel.Debug)
                         .AddConsole()
                         .AddDebug();
                 })

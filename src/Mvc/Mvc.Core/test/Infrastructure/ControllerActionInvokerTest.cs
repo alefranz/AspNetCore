@@ -1634,6 +1634,13 @@ namespace Microsoft.AspNetCore.Mvc.Infrastructure
 
         public sealed class TestController
         {
+            private string _value;
+
+            public string Thing { get { return _value; } set
+                {
+                    _value = value;
+                } }
+
             public IActionResult ActionMethod()
             {
                 return Result;
