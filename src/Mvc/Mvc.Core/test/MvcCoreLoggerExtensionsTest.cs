@@ -15,6 +15,32 @@ namespace Microsoft.AspNetCore.Mvc
     public class MvcCoreLoggerExtensionsTest
     {
         [Fact]
+        public void ExecutingAction_LogsActionAndRouteData()
+        {
+            // Arrange
+            var testSink = new TestSink();
+            var loggerFactory = new TestLoggerFactory(testSink, enabled: true);
+            var logger = loggerFactory.CreateLogger("test");
+
+            var action = new Controllers.ControllerActionDescriptor
+            {
+                // Using a generic type to verify the use of a clean name
+                ControllerTypeInfo = typeof(ValueTuple<int, string>).GetTypeInfo(),
+                MethodInfo = typeof(object).GetMethod(nameof(ToString))
+            };
+
+            // Act
+            logger.ExecutingAction(action);
+
+            // Assert
+            var write = Assert.Single(testSink.Writes);
+            Assert.Equal(
+                "Route matched with {. " +
+                "Executing controller action with signature System.String ToString() on controller System.ValueTuple<int, string> (System.Private.CoreLib).",
+                write.State.ToString());
+        }
+
+        [Fact]
         public void LogsFilters_OnlyWhenLogger_IsEnabled()
         {
             // Arrange
