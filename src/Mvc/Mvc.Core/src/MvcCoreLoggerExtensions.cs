@@ -720,16 +720,23 @@ namespace Microsoft.AspNetCore.Mvc
                 var routeValues = action.RouteValues.Values.ToArray();
                 var stringBuilder = new StringBuilder();
                 stringBuilder.Append("{");
-                for (var i = 0; i < routeValues.Length; i++)
+                if (routeValues.Length > 0)
                 {
-                    if (i == routeValues.Length - 1)
+                    for (var i = 0; i < routeValues.Length; i++)
                     {
-                        stringBuilder.Append($"{routeKeys[i]} = \"{routeValues[i]}\"}}");
+                        if (i == routeValues.Length - 1)
+                        {
+                            stringBuilder.Append($"{routeKeys[i]} = \"{routeValues[i]}\"}}");
+                        }
+                        else
+                        {
+                            stringBuilder.Append($"{routeKeys[i]} = \"{routeValues[i]}\", ");
+                        }
                     }
-                    else
-                    {
-                        stringBuilder.Append($"{routeKeys[i]} = \"{routeValues[i]}\", ");
-                    }
+                }
+                else
+                {
+                    stringBuilder.Append("}");
                 }
 
                 if (action.RouteValues.TryGetValue("page", out var page) && page != null)

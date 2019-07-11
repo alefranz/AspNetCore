@@ -1488,7 +1488,7 @@ namespace Microsoft.AspNetCore.Mvc.Infrastructure
             var actionName = $"{typeof(ControllerActionInvokerTest).FullName}+{nameof(TestController)}.{nameof(TestController.ActionMethod)} ({typeof(ControllerActionInvokerTest).Assembly.GetName().Name})";
             var actionResultName = $"{typeof(CommonResourceInvokerTest).FullName}+{nameof(TestResult)}";
             Assert.Equal(13, messages.Count);
-            Assert.Contains($"Route matched with {{. Executing controller action with signature {typeof(IActionResult).FullName} {nameof(TestController.ActionMethod)}() on controller {controllerName}.", messages);
+            Assert.Contains($"Route matched with {{}}. Executing controller action with signature {typeof(IActionResult).FullName} {nameof(TestController.ActionMethod)}() on controller {controllerName}.", messages);
             Assert.Contains("Execution plan of authorization filters (in the following order): None", messages);
             Assert.Contains("Execution plan of resource filters (in the following order): None", messages);
             Assert.Contains("Execution plan of action filters (in the following order): None", messages);
