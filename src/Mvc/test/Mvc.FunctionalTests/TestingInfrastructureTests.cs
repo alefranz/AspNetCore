@@ -191,6 +191,21 @@ namespace Microsoft.AspNetCore.Mvc.FunctionalTests
             Assert.NotNull(factory.Services.GetService(typeof(IConfiguration)));
         }
 
+        [Fact]
+        public async Task TestingInfrastructure_CanOverrideContainerBuilder()
+        {
+            using var factory = new WebApplicationFactory<GenericHostWebSiteWithCustomContainer.Startup>()
+                .WithWebHostBuilder(builder => {
+                    builder.ConfigureTestServices(s => s.AddSingleton(new GenericHostWebSiteWithCustomContainer.TestGenericService { Message = "ConfigureTestServices" }));
+                    builder.ConfigureTestContainer<GenericHostWebSiteWithCustomContainer.ThirdPartyContainer>(s =>
+                        s.Services.AddSingleton(new GenericHostWebSiteWithCustomContainer.TestGenericService { Message = "ConfigureTestContainer" }));
+                });
+
+            var response = await factory.CreateClient().GetStringAsync("");
+
+            Assert.Equal("ConfigureServices,ConfigureTestServices,ConfigureContainer,ConfigureTestContainer", response);
+        }
+
         private class OverridenService : TestService
         {
             public OverridenService()
