@@ -26,7 +26,7 @@ namespace ResponseCachingSample
                 context.Response.GetTypedHeaders().CacheControl = new CacheControlHeaderValue()
                 {
                     Public = true,
-                    MaxAge = TimeSpan.FromSeconds(10)
+                    MaxAge = TimeSpan.FromSeconds(1000)
                 };
                 context.Response.Headers[HeaderNames.Vary] = new string[] { "Accept-Encoding" };
 

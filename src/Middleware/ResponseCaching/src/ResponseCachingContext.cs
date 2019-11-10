@@ -3,8 +3,8 @@
 
 using System;
 using System.IO;
+using System.IO.Pipelines;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 
@@ -34,7 +34,8 @@ namespace Microsoft.AspNetCore.ResponseCaching
         public TimeSpan? CachedEntryAge { get; internal set; }
 
         public CachedVaryByRules CachedVaryByRules { get; set; }
-
+        public PipeWriter OriginalResponsePipeWriter { get; internal set; }
+        public ResponseCachingPipeWriter ResponseCachingPipeWriter { get; internal set; }
         internal ILogger Logger { get; }
 
         internal bool ShouldCacheResponse { get; set; }

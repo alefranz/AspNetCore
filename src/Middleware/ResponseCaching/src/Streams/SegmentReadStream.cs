@@ -1,9 +1,10 @@
-﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -220,6 +221,31 @@ namespace Microsoft.AspNetCore.ResponseCaching
                 await destination.WriteAsync(_segments[_segmentIndex], _segmentOffset, bytesCopied, cancellationToken);
                 _position += bytesCopied;
             }
+        }
+
+        public async Task CopyToAsync(PipeWriter destination, CancellationToken cancellationToken)
+        {
+            if (destination == null)
+            {
+                throw new ArgumentNullException(nameof(destination));
+            }
+
+            for (; _segmentIndex < _segments.Count; _segmentIndex++, _segmentOffset = 0)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var bytesCopied = _segments[_segmentIndex].Length - _segmentOffset;
+
+                var memory = destination.GetMemory(bytesCopied);
+                _segments[_segmentIndex].AsMemory(_segmentOffset).CopyTo(memory);
+                
+                _position += bytesCopied;
+
+                destination.Advance(bytesCopied);
+
+                await destination.FlushAsync();
+            }
+
+            destination.Complete();
         }
     }
 }

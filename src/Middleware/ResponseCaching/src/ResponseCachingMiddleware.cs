@@ -45,7 +45,8 @@ namespace Microsoft.AspNetCore.ResponseCaching
                     SizeLimit = options.Value.SizeLimit
                 })),
                 new ResponseCachingKeyProvider(poolProvider, options))
-        { }
+        {
+        }
 
         // for testing
         internal ResponseCachingMiddleware(
@@ -91,6 +92,8 @@ namespace Microsoft.AspNetCore.ResponseCaching
 
         public async Task Invoke(HttpContext httpContext)
         {
+            var x = httpContext.Features.Get<IHttpBodyControlFeature>();
+            
             var context = new ResponseCachingContext(httpContext, _logger);
 
             // Should we attempt any caching logic?
@@ -193,13 +196,15 @@ namespace Microsoft.AspNetCore.ResponseCaching
                     {
                         try
                         {
-                            await body.CopyToAsync(response.Body, StreamUtilities.BodySegmentSize, context.HttpContext.RequestAborted);
+                            // TODO
+                            await ((SegmentReadStream)body).CopyToAsync(response.BodyWriter, context.HttpContext.RequestAborted);
+                        //await body.CopyToAsync(response.Body, StreamUtilities.BodySegmentSize, context.HttpContext.RequestAborted);
                         }
-                        catch (OperationCanceledException)
+                            catch (OperationCanceledException)
                         {
                             context.HttpContext.Abort();
                         }
-                    }
+                }
                     _logger.CachedResponseServed();
                 }
                 return true;
