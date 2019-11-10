@@ -193,13 +193,13 @@ namespace Microsoft.AspNetCore.ResponseCaching
                     {
                         try
                         {
-                            await body.CopyToAsync(response.Body, StreamUtilities.BodySegmentSize, context.HttpContext.RequestAborted);
+                            await body.CopyToAsync(response.BodyWriter, context.HttpContext.RequestAborted);
                         }
-                        catch (OperationCanceledException)
+                            catch (OperationCanceledException)
                         {
                             context.HttpContext.Abort();
                         }
-                    }
+                }
                     _logger.CachedResponseServed();
                 }
                 return true;
@@ -344,17 +344,17 @@ namespace Microsoft.AspNetCore.ResponseCaching
             if (context.ShouldCacheResponse && context.ResponseCachingStream.BufferingEnabled)
             {
                 var contentLength = context.HttpContext.Response.ContentLength;
-                var bufferStream = context.ResponseCachingStream.GetBufferStream();
-                if (!contentLength.HasValue || contentLength == bufferStream.Length)
+                var cachedResponseBody = context.ResponseCachingStream.GetCachedResponseBody();
+                if (!contentLength.HasValue || contentLength == cachedResponseBody.Length)
                 {
                     var response = context.HttpContext.Response;
                     // Add a content-length if required
                     if (!response.ContentLength.HasValue && StringValues.IsNullOrEmpty(response.Headers[HeaderNames.TransferEncoding]))
                     {
-                        context.CachedResponse.Headers[HeaderNames.ContentLength] = HeaderUtilities.FormatNonNegativeInt64(bufferStream.Length);
+                        context.CachedResponse.Headers[HeaderNames.ContentLength] = HeaderUtilities.FormatNonNegativeInt64(cachedResponseBody.Length);
                     }
 
-                    context.CachedResponse.Body = bufferStream;
+                    context.CachedResponse.Body = cachedResponseBody;
                     _logger.ResponseCached();
                     _cache.Set(context.StorageVaryKey ?? context.BaseKey, context.CachedResponse, context.CachedResponseValidFor);
                 }
