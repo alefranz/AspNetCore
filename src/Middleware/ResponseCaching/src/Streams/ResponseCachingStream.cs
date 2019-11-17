@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,9 +17,9 @@ namespace Microsoft.AspNetCore.ResponseCaching
         private readonly SegmentWriteStream _segmentWriteStream;
         private readonly Action _startResponseCallback;
 
-        internal ResponseCachingStream(Stream innerStream, long maxBufferSize, int segmentSize, Action startResponseCallback)
+        internal ResponseCachingStream(PipeWriter innerPipeWriter, long maxBufferSize, int segmentSize, Action startResponseCallback)
         {
-            _innerStream = innerStream;
+            _innerStream = innerPipeWriter;
             _maxBufferSize = maxBufferSize;
             _segmentSize = segmentSize;
             _startResponseCallback = startResponseCallback;

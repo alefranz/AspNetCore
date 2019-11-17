@@ -407,7 +407,12 @@ namespace Microsoft.AspNetCore.ResponseCaching
         {
             // Shim response stream
             context.OriginalResponseStream = context.HttpContext.Response.Body;
-            context.ResponseCachingStream = new ResponseCachingStream(
+            //context.ResponseCachingStream = new ResponseCachingStream(
+            //    context.OriginalResponseStream,
+            //    _options.MaximumBodySize,
+            //    StreamUtilities.BodySegmentSize,
+            //    () => StartResponse(context));
+            context.ResponseCachingStream = new HttpStream(
                 context.OriginalResponseStream,
                 _options.MaximumBodySize,
                 StreamUtilities.BodySegmentSize,
