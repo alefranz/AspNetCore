@@ -1,6 +1,8 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
@@ -17,33 +19,43 @@ namespace Microsoft.AspNetCore.WebSockets.Microbenchmarks
     {
         private static readonly string _cacheControl = $"{CacheControlHeaderValue.PublicString}, {CacheControlHeaderValue.MaxAgeString}={int.MaxValue}";
 
-        private readonly ResponseCachingMiddleware _middleware;
-        private readonly MemoryStream _memory;
+        private ResponseCachingMiddleware _middleware;
+        //private readonly MemoryStream _memory;
+        private readonly byte[] _data = new byte[100 * 1024];
 
-        private long _counter = 0;
+        [Params(10, 1024, 100*1024)]
+        public int Size { get; set; }
+
+        public IEnumerable<string> CacheControlValues => new[] {
+            $"{CacheControlHeaderValue.PublicString}, {CacheControlHeaderValue.MaxAgeString}={int.MaxValue}",
+            $"{CacheControlHeaderValue.PublicString}, {CacheControlHeaderValue.MaxAgeString}={int.MaxValue}"
+        };
+
+        [ParamsSource(nameof(CacheControlValues))]
+        public string CacheControl { get; set; }
 
         public ResponseCachingBenchmark()
         {
-            _middleware = new ResponseCachingMiddleware(
-                    async context => {
-                        context.Response.Headers[HeaderNames.CacheControl] = _cacheControl;
-                        await context.Response.WriteAsync("Hello World!");
-                    },
-                    Options.Create(new ResponseCachingOptions {
-                        SizeLimit = int.MaxValue // 2GB
-                    }),
-                    NullLoggerFactory.Instance,
-                    new DefaultObjectPoolProvider()
-                );
-            _memory = new MemoryStream();
+            //_memory = new MemoryStream();
         }
 
         [GlobalSetup]
         public void Setup()
         {
-            // call once to actually cache
-            // not async as the version of BenchmarkDotNet used here doesn't have support for async GlobalSetup
-            ServeFromCache().GetAwaiter().GetResult();
+            _middleware = new ResponseCachingMiddleware(
+                    async context => {
+                        context.Response.Headers[HeaderNames.CacheControl] = _cacheControl;
+                        await context.Response.BodyWriter.WriteAsync(_data.AsMemory(0, Size));
+                    },
+                    Options.Create(new ResponseCachingOptions
+                    {
+                        SizeLimit = int.MaxValue // ~2GB
+                    }),
+                    NullLoggerFactory.Instance,
+                    new DefaultObjectPoolProvider()
+                );
+
+            // no need to actually cache as there is a warm-up fase
         }
 
         [Benchmark]
@@ -51,7 +63,10 @@ namespace Microsoft.AspNetCore.WebSockets.Microbenchmarks
         {
             var context = new DefaultHttpContext();
             context.Request.Method = HttpMethods.Get;
-            context.Request.Path = $"/{++_counter}";
+            context.Request.Path = "/a";
+
+            // don't serve from cache but store result
+            context.Request.Headers[HeaderNames.CacheControl] = CacheControlHeaderValue.NoCacheString;
 
             await _middleware.Invoke(context);
         }
@@ -59,11 +74,11 @@ namespace Microsoft.AspNetCore.WebSockets.Microbenchmarks
         [Benchmark]
         public async Task ServeFromCache()
         {
-            _memory.Seek(0, SeekOrigin.Begin);
+            //_memory.Seek(0, SeekOrigin.Begin);
             var context = new DefaultHttpContext();
-            context.Response.Body = _memory;
+            //context.Response.Body = _memory;
             context.Request.Method = HttpMethods.Get;
-            context.Request.Path = "/cached";
+            context.Request.Path = "/b";
 
             await _middleware.Invoke(context);
 
