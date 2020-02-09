@@ -354,6 +354,57 @@ namespace Microsoft.AspNetCore.WebUtilities
                 }
 
                 var ch = _charBuffer[_charBufferIndex++];
+
+                if (ch == '\r' || ch == '\n')
+                {
+                    if (ch == '\r')
+                    {
+                        if (_charBufferIndex == _charsRead)
+                        {
+                            if (await ReadIntoBufferAsync() == 0)
+                            {
+                                return sb.ToString();  // reached EOF
+                            }
+                        }
+
+                        if (_charBuffer[_charBufferIndex] == '\n')
+                        {
+                            _charBufferIndex++;  // consume the \n character
+                        }
+                    }
+
+                    return sb.ToString();
+                }
+                sb.Append(ch);
+            }
+
+            if (sb.Length > 0)
+            {
+                return sb.ToString();
+            }
+
+            return null;
+        }
+
+        public async Task<string> ReadLineNewAsync()
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(HttpRequestStreamReader));
+            }
+
+            StringBuilder sb = new StringBuilder();
+            while (true)
+            {
+                if (_charBufferIndex == _charsRead)
+                {
+                    if (await ReadIntoBufferAsync() == 0)
+                    {
+                        break;  // reached EOF, we need to return null if we were at EOF from the beginning
+                    }
+                }
+
+                var ch = _charBuffer[_charBufferIndex++];
                 
                 if (ch == '\r' || ch == '\n')
                 {
@@ -384,6 +435,183 @@ namespace Microsoft.AspNetCore.WebUtilities
             }
 
             return null;
+        }
+
+        // true if last is \r
+        private bool UpdateStringBuilder(StringBuilder sb, bool hadCarriageReturn)
+        {
+            if (hadCarriageReturn && _charBuffer[_charBufferIndex] == '\n')
+            {
+                _charBufferIndex++;
+                if (_charBufferIndex == _charsRead) return false;
+            }
+
+            var span = new Span<char>(_charBuffer, _charBufferIndex, _charsRead - _charBufferIndex);
+
+
+            // \r
+            // \n
+            // \r\n
+
+            var index = span.IndexOf('\r');
+            if (index == -1)
+            {
+                index = span.IndexOf('\n');
+                if (index == -1)
+                {
+                    // no newline so far
+                    sb.Append(span);
+                    _charBufferIndex = _charsRead;
+                }
+                else
+                {
+                    // \n
+                    sb.Append(span.Slice(0, index));
+                    _charBufferIndex += index + 1;
+                }
+            }
+            else
+            {
+                // \r...
+                if (index == span.Length - 1) // at the end
+                {
+                    // reached EOF
+                    // not perfectly accurate, we should probably read more into the buffer,
+                    // but we can't as we haven't consumed anything yet
+
+                    // \rEOF
+                    sb.Append(span.Slice(0, index));
+                    _charBufferIndex += index + 1;
+                    return true;
+                }
+
+                var next = span[index + 1];
+                if (next == '\n')
+                {
+                    // \r\n
+                    sb.Append(span.Slice(0, index));
+                    _charBufferIndex += index + 2;  // consume also \n
+
+                }
+                else
+                {
+                    // \r
+                    sb.Append(span.Slice(0, index));
+                    _charBufferIndex += index + 1;
+                }
+            }
+            return false;
+        }
+
+        public async Task<string> ReadLineIndexAsync()
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(HttpRequestStreamReader));
+            }
+
+            StringBuilder sb = new StringBuilder();
+            bool hadCarriageReturn = false;
+            while (true)
+            {
+                if (_charBufferIndex == _charsRead)
+                {
+                    if (await ReadIntoBufferAsync() == 0)
+                    {
+                        break;  // reached EOF, we need to return null if we were at EOF from the beginning
+                    }
+                }
+
+                hadCarriageReturn = UpdateStringBuilder(sb, hadCarriageReturn);
+            }
+
+            if (sb.Length > 0)
+            {
+                return sb.ToString();
+            }
+
+            return null;
+        }
+
+        // Reads a line. A line is defined as a sequence of characters followed by
+        // a carriage return ('\r'), a line feed ('\n'), or a carriage return
+        // immediately followed by a line feed. The resulting string does not
+        // contain the terminating carriage return and/or line feed. The returned
+        // value is null if the end of the input stream has been reached.
+        //
+        public override string ReadLine()
+        {
+            StringBuilder sb = null;
+            int index;
+
+            while (true)
+            {
+                if (_charBufferIndex == _charsRead)
+                {
+                    if (ReadIntoBuffer() == 0)
+                    {
+                        break;
+                    }
+                }
+
+                var span = new Span<char>(_charBuffer, _charBufferIndex, _charsRead - _charBufferIndex);
+
+                if ((index = span.IndexOf('\r')) != -1)
+                {
+                    span = span.Slice(0, index);
+                    _charBufferIndex += index;
+
+                    if (_charBufferIndex < _charsRead)
+                    {
+                        // consume following \n
+                        if (_charBuffer[_charBufferIndex] == '\n')
+                        {
+                            _charBufferIndex++;
+                        }
+
+                        if (sb != null)
+                        {
+                            sb.Append(span);
+                            break;
+                        }
+
+                        // perf: if the new line is found in first pass, we skip the StringBuilder
+                        return span.Length > 0 ? span.ToString() : null;
+                    }
+
+                    // we where at end of buffer, we need to consume the buffer so we can read more to check for \n
+                    sb ??= new StringBuilder();
+                    sb.Append(span);
+                    if (ReadIntoBuffer() != 0)
+                    {
+                        if (_charBuffer[_charBufferIndex] == '\n')
+                        {
+                            _charBufferIndex++;
+                        }
+                    }
+                    break;
+                }
+
+                if ((index = span.IndexOf('\n')) != -1)
+                {
+                    span = span.Slice(0, index);
+                    _charBufferIndex += index;
+
+                    if (sb != null)
+                    {
+                        sb.Append(span);
+                        break;
+                    }
+
+                    // perf: if the new line is found in first pass, we skip the StringBuilder
+                    return span.Length > 0 ? span.ToString() : null;
+                }
+
+                sb ??= new StringBuilder();
+                sb.Append(span);
+            }
+
+            return sb.Length > 0 ? sb.ToString() : null;
         }
 
         private int ReadIntoBuffer()

@@ -418,6 +418,12 @@ namespace Microsoft.AspNetCore.WebUtilities
             yield return new object[] { new Func<HttpRequestStreamReader, Task<string>>((httpRequestStreamReader) =>
                  httpRequestStreamReader.ReadLineAsync()
             )};
+            //yield return new object[] { new Func<HttpRequestStreamReader, Task<string>>((httpRequestStreamReader) =>
+            //     httpRequestStreamReader.ReadLineNewAsync()
+            //)};
+            //yield return new object[] { new Func<HttpRequestStreamReader, Task<string>>((httpRequestStreamReader) =>
+            //     httpRequestStreamReader.ReadLineIndexAsync()
+            //)};
             yield return new object[] { new Func<HttpRequestStreamReader, Task<string>>((httpRequestStreamReader) =>
                  Task.FromResult(httpRequestStreamReader.ReadLine())
             )};
