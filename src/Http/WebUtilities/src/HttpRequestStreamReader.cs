@@ -5,6 +5,7 @@ using System;
 using System.Buffers;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -533,6 +534,9 @@ namespace Microsoft.AspNetCore.WebUtilities
             return null;
         }
 
+        // TODO: remove
+        public string BaseReadLine() => base.ReadLine();
+
         // Reads a line. A line is defined as a sequence of characters followed by
         // a carriage return ('\r'), a line feed ('\n'), or a carriage return
         // immediately followed by a line feed. The resulting string does not
@@ -542,7 +546,6 @@ namespace Microsoft.AspNetCore.WebUtilities
         public override string ReadLine()
         {
             StringBuilder sb = null;
-            int index;
 
             while (true)
             {
@@ -556,15 +559,18 @@ namespace Microsoft.AspNetCore.WebUtilities
 
                 var span = new Span<char>(_charBuffer, _charBufferIndex, _charsRead - _charBufferIndex);
 
-                if ((index = span.IndexOf('\r')) != -1)
+                var indexCarriageReturn = span.IndexOf('\r');
+                var indexLineFeed = span.IndexOf('\n');
+
+                if (indexCarriageReturn != -1 && (indexLineFeed == -1 || indexCarriageReturn < indexLineFeed))
                 {
-                    span = span.Slice(0, index);
-                    _charBufferIndex += index;
+                    span = span.Slice(0, indexCarriageReturn);
+                    _charBufferIndex += indexCarriageReturn + 1;
 
                     if (_charBufferIndex < _charsRead)
                     {
                         // consume following \n
-                        if (_charBuffer[_charBufferIndex] == '\n')
+                        if (indexLineFeed == indexCarriageReturn + 1)
                         {
                             _charBufferIndex++;
                         }
@@ -576,10 +582,10 @@ namespace Microsoft.AspNetCore.WebUtilities
                         }
 
                         // perf: if the new line is found in first pass, we skip the StringBuilder
-                        return span.Length > 0 ? span.ToString() : null;
+                        return span.ToString();
                     }
 
-                    // we where at end of buffer, we need to consume the buffer so we can read more to check for \n
+                    // we where at the end of buffer, we need to read more to check for a line feed to consume
                     sb ??= new StringBuilder();
                     sb.Append(span);
                     if (ReadIntoBuffer() != 0)
@@ -592,10 +598,10 @@ namespace Microsoft.AspNetCore.WebUtilities
                     break;
                 }
 
-                if ((index = span.IndexOf('\n')) != -1)
+                if (indexLineFeed != -1)
                 {
-                    span = span.Slice(0, index);
-                    _charBufferIndex += index;
+                    span = span.Slice(0, indexLineFeed);
+                    _charBufferIndex += indexLineFeed + 1;
 
                     if (sb != null)
                     {
@@ -604,14 +610,15 @@ namespace Microsoft.AspNetCore.WebUtilities
                     }
 
                     // perf: if the new line is found in first pass, we skip the StringBuilder
-                    return span.Length > 0 ? span.ToString() : null;
+                    return span.ToString();
                 }
 
                 sb ??= new StringBuilder();
                 sb.Append(span);
+                _charBufferIndex = _charsRead;
             }
 
-            return sb.Length > 0 ? sb.ToString() : null;
+            return sb?.ToString();
         }
 
         private int ReadIntoBuffer()
