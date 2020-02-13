@@ -559,21 +559,50 @@ namespace Microsoft.AspNetCore.WebUtilities
 
                 var span = new Span<char>(_charBuffer, _charBufferIndex, _charsRead - _charBufferIndex);
 
-                var indexCarriageReturn = span.IndexOf('\r');
-                var indexLineFeed = span.IndexOf('\n');
+                var index = span.IndexOfAny('\r', '\n');
 
-                if (indexCarriageReturn != -1 && (indexLineFeed == -1 || indexCarriageReturn < indexLineFeed))
+                if (index != -1)
                 {
-                    span = span.Slice(0, indexCarriageReturn);
-                    _charBufferIndex += indexCarriageReturn + 1;
-
-                    if (_charBufferIndex < _charsRead)
+                    if (span[index] == '\r')
                     {
-                        // consume following \n
-                        if (indexLineFeed == indexCarriageReturn + 1)
+                        span = span.Slice(0, index);
+                        _charBufferIndex += index + 1;
+
+                        if (_charBufferIndex < _charsRead)
                         {
-                            _charBufferIndex++;
+                            // consume following \n
+                            if (_charBuffer[_charBufferIndex] == '\n')
+                            {
+                                _charBufferIndex++;
+                            }
+
+                            if (sb != null)
+                            {
+                                sb.Append(span);
+                                break;
+                            }
+
+                            // perf: if the new line is found in first pass, we skip the StringBuilder
+                            return span.ToString();
                         }
+
+                        // we where at the end of buffer, we need to read more to check for a line feed to consume
+                        sb ??= new StringBuilder();
+                        sb.Append(span);
+                        if (ReadIntoBuffer() != 0)
+                        {
+                            if (_charBuffer[_charBufferIndex] == '\n')
+                            {
+                                _charBufferIndex++;
+                            }
+                        }
+                        break;
+                    }
+
+                    if (span[index] == '\n')
+                    {
+                        span = span.Slice(0, index);
+                        _charBufferIndex += index + 1;
 
                         if (sb != null)
                         {
@@ -584,33 +613,6 @@ namespace Microsoft.AspNetCore.WebUtilities
                         // perf: if the new line is found in first pass, we skip the StringBuilder
                         return span.ToString();
                     }
-
-                    // we where at the end of buffer, we need to read more to check for a line feed to consume
-                    sb ??= new StringBuilder();
-                    sb.Append(span);
-                    if (ReadIntoBuffer() != 0)
-                    {
-                        if (_charBuffer[_charBufferIndex] == '\n')
-                        {
-                            _charBufferIndex++;
-                        }
-                    }
-                    break;
-                }
-
-                if (indexLineFeed != -1)
-                {
-                    span = span.Slice(0, indexLineFeed);
-                    _charBufferIndex += indexLineFeed + 1;
-
-                    if (sb != null)
-                    {
-                        sb.Append(span);
-                        break;
-                    }
-
-                    // perf: if the new line is found in first pass, we skip the StringBuilder
-                    return span.ToString();
                 }
 
                 sb ??= new StringBuilder();
