@@ -198,6 +198,30 @@ namespace Microsoft.AspNetCore.WebUtilities
             Assert.Null(eol);
         }
 
+        [Theory]
+        [MemberData(nameof(ReadLineData))]
+        public static async Task ReadLine_CarriageReturnAndLineFeedAcrossBufferBundaries(Func<HttpRequestStreamReader, Task<string>> action)
+        {
+            // Arrange
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream);
+            writer.Write("123456789\r\nfoo");
+            writer.Flush();
+            stream.Position = 0;
+
+            var reader = new HttpRequestStreamReader(stream, Encoding.UTF8, 10);
+
+            // Act & Assert
+            var data = await action(reader);
+            Assert.Equal("123456789", data);
+
+            data = await action(reader);
+            Assert.Equal("foo", data);
+
+            var eol = await action(reader);
+            Assert.Null(eol);
+        }
+
         [Fact]
         public static void Read_Span_ReadAllCharactersAtOnce()
         {

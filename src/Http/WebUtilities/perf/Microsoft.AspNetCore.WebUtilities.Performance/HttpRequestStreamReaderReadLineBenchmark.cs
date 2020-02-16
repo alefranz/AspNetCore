@@ -10,9 +10,8 @@ namespace Microsoft.AspNetCore.WebUtilities
     public class HttpRequestStreamReaderReadLineBenchmark
     {
         private MemoryStream _stream;
-        private HttpRequestStreamReader _reader;
 
-        [Params(2, 50_000)]
+        [Params(2, 1000, 1050)]  // Default buffer length is 1024
         public int Length { get; set; }
 
         [GlobalSetup]
@@ -26,17 +25,11 @@ namespace Microsoft.AspNetCore.WebUtilities
             _stream = new MemoryStream(Encoding.UTF8.GetBytes(data));
         }
 
-        [IterationSetup]
-        public void IterationSetup()
-        {
-            _stream.Seek(0, SeekOrigin.Begin);
-            _reader = new HttpRequestStreamReader(_stream, Encoding.UTF8);
-        }
-
         [Benchmark]
         public string ReadLine()
         {
-            var result = _reader.ReadLine();
+            var reader = CreateReader();
+            var result = reader.ReadLine();
             Debug.Assert(result.Length == Length - 2);
             return result;
         }
@@ -44,9 +37,17 @@ namespace Microsoft.AspNetCore.WebUtilities
         [Benchmark]
         public string BaseReadLine()
         {
-            var result = _reader.BaseReadLine();
+            var reader = CreateReader();
+            var result = reader.BaseReadLine();
             Debug.Assert(result.Length == Length - 2);
             return result;
+        }
+
+        [Benchmark]
+        public HttpRequestStreamReader CreateReader()
+        {
+            _stream.Seek(0, SeekOrigin.Begin);
+            return new HttpRequestStreamReader(_stream, Encoding.UTF8);
         }
     }
 }
