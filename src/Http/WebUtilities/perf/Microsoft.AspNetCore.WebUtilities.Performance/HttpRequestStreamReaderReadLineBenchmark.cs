@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Attributes.Jobs;
 
@@ -11,7 +12,7 @@ namespace Microsoft.AspNetCore.WebUtilities
     {
         private MemoryStream _stream;
 
-        [Params(2, 1000, 1050)]  // Default buffer length is 1024
+        [Params(2, 1000, 1025, 1600)]  // Default buffer length is 1024
         public int Length { get; set; }
 
         [GlobalSetup]
@@ -23,6 +24,15 @@ namespace Microsoft.AspNetCore.WebUtilities
             data[Length - 1] = '\n';
 
             _stream = new MemoryStream(Encoding.UTF8.GetBytes(data));
+        }
+
+        [Benchmark]
+        public async Task<string> ReadLineAsync()
+        {
+            var reader = CreateReader();
+            var result = await reader.ReadLineAsync();
+            Debug.Assert(result.Length == Length - 2);
+            return result;
         }
 
         [Benchmark]

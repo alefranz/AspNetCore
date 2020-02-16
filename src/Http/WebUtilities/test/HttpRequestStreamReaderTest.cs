@@ -439,20 +439,11 @@ namespace Microsoft.AspNetCore.WebUtilities
 
         public static IEnumerable<object[]> ReadLineData()
         {
-            //yield return new object[] { new Func<HttpRequestStreamReader, Task<string>>((httpRequestStreamReader) =>
-            //     httpRequestStreamReader.ReadLineAsync()
-            //)};
-            //yield return new object[] { new Func<HttpRequestStreamReader, Task<string>>((httpRequestStreamReader) =>
-            //     httpRequestStreamReader.ReadLineNewAsync()
-            //)};
-            //yield return new object[] { new Func<HttpRequestStreamReader, Task<string>>((httpRequestStreamReader) =>
-            //     httpRequestStreamReader.ReadLineIndexAsync()
-            //)};
-            yield return new object[] { new Func<HttpRequestStreamReader, Task<string>>((httpRequestStreamReader) =>
-                 Task.FromResult(httpRequestStreamReader.BaseReadLine())
-            )};
             yield return new object[] { new Func<HttpRequestStreamReader, Task<string>>((httpRequestStreamReader) =>
                  Task.FromResult(httpRequestStreamReader.ReadLine())
+            )};
+            yield return new object[] { new Func<HttpRequestStreamReader, Task<string>>((httpRequestStreamReader) =>
+                 httpRequestStreamReader.ReadLineAsync()
             )};
         }
     }

@@ -341,50 +341,31 @@ namespace Microsoft.AspNetCore.WebUtilities
             if (_disposed)
             {
                 throw new ObjectDisposedException(nameof(HttpRequestStreamReader));
-            }
+            }              
 
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = null;
+            var consumeLineFeed = false;
+
             while (true)
             {
                 if (_charBufferIndex == _charsRead)
                 {
                     if (await ReadIntoBufferAsync() == 0)
                     {
-                        break;  // reached EOF, we need to return null if we were at EOF from the beginning
+                        // reached EOF, we need to return null if we were at EOF from the beginning
+                        return sb?.ToString();
                     }
                 }
 
-                var ch = _charBuffer[_charBufferIndex++];
+                var stepResult = ReadLineStep(ref sb, ref consumeLineFeed);
 
-                if (ch == '\r' || ch == '\n')
+                if (stepResult.Completed)
                 {
-                    if (ch == '\r')
-                    {
-                        if (_charBufferIndex == _charsRead)
-                        {
-                            if (await ReadIntoBufferAsync() == 0)
-                            {
-                                return sb.ToString();  // reached EOF
-                            }
-                        }
-
-                        if (_charBuffer[_charBufferIndex] == '\n')
-                        {
-                            _charBufferIndex++;  // consume the \n character
-                        }
-                    }
-
-                    return sb.ToString();
+                    return stepResult.Result ?? sb?.ToString();
                 }
-                sb.Append(ch);
-            }
 
-            if (sb.Length > 0)
-            {
-                return sb.ToString();
+                continue;
             }
-
-            return null;
         }
 
         // TODO: remove
@@ -397,6 +378,11 @@ namespace Microsoft.AspNetCore.WebUtilities
         // value is null if the end of the input stream has been reached.
         public override string ReadLine()
         {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(HttpRequestStreamReader));
+            }
+
             StringBuilder sb = null;
             var consumeLineFeed = false;
 
@@ -406,77 +392,90 @@ namespace Microsoft.AspNetCore.WebUtilities
                 {
                     if (ReadIntoBuffer() == 0)
                     {
-                        break;
+                        // When 
+                        return sb?.ToString();
                     }
                 }
 
-                if (consumeLineFeed)
+                var stepResult = ReadLineStep(ref sb, ref consumeLineFeed);
+
+                if (stepResult.Completed)
                 {
-                    if (_charBuffer[_charBufferIndex] == '\n')
-                    {
-                        _charBufferIndex++;
-                    }
-                    break;
+                    return stepResult.Result ?? sb?.ToString();
                 }
 
-                var span = new Span<char>(_charBuffer, _charBufferIndex, _charsRead - _charBufferIndex);
+                continue;
+            }
+        }
 
-                var index = span.IndexOfAny('\r', '\n');
-
-                if (index != -1)
+        private ReadLineStepResult ReadLineStep(ref StringBuilder sb, ref bool consumeLineFeed)
+        {
+            if (consumeLineFeed)
+            {
+                if (_charBuffer[_charBufferIndex] == '\n')
                 {
-                    if (span[index] == '\r')
-                    {
-                        span = span.Slice(0, index);
-                        _charBufferIndex += index + 1;
+                    _charBufferIndex++;
+                }
+                return ReadLineStepResult.Done;
+            }
 
-                        if (_charBufferIndex < _charsRead)
+            var span = new Span<char>(_charBuffer, _charBufferIndex, _charsRead - _charBufferIndex);
+
+            var index = span.IndexOfAny('\r', '\n');
+
+            if (index != -1)
+            {
+                if (span[index] == '\r')
+                {
+                    span = span.Slice(0, index);
+                    _charBufferIndex += index + 1;
+
+                    if (_charBufferIndex < _charsRead)
+                    {
+                        // consume following \n
+                        if (_charBuffer[_charBufferIndex] == '\n')
                         {
-                            // consume following \n
-                            if (_charBuffer[_charBufferIndex] == '\n')
-                            {
-                                _charBufferIndex++;
-                            }
-
-                            if (sb != null)
-                            {
-                                sb.Append(span);
-                                break;
-                            }
-
-                            // perf: if the new line is found in first pass, we skip the StringBuilder
-                            return span.ToString();
+                            _charBufferIndex++;
                         }
-
-                        // we where at the end of buffer, we need to read more to check for a line feed to consume
-                        sb ??= new StringBuilder();
-                        sb.Append(span);
-                        consumeLineFeed = true;
-                        continue;
-                    }
-
-                    if (span[index] == '\n')
-                    {
-                        span = span.Slice(0, index);
-                        _charBufferIndex += index + 1;
 
                         if (sb != null)
                         {
                             sb.Append(span);
-                            break;
+                            return ReadLineStepResult.Done;
                         }
 
                         // perf: if the new line is found in first pass, we skip the StringBuilder
-                        return span.ToString();
+                        return ReadLineStepResult.FromResult(span.ToString());
                     }
+
+                    // we where at the end of buffer, we need to read more to check for a line feed to consume
+                    sb ??= new StringBuilder();
+                    sb.Append(span);
+                    consumeLineFeed = true;
+                    return ReadLineStepResult.Continue;
                 }
 
-                sb ??= new StringBuilder();
-                sb.Append(span);
-                _charBufferIndex = _charsRead;
+                if (span[index] == '\n')
+                {
+                    span = span.Slice(0, index);
+                    _charBufferIndex += index + 1;
+
+                    if (sb != null)
+                    {
+                        sb.Append(span);
+                        return ReadLineStepResult.Done;
+                    }
+
+                    // perf: if the new line is found in first pass, we skip the StringBuilder
+                    return ReadLineStepResult.FromResult(span.ToString());
+                }
             }
 
-            return sb?.ToString();
+            sb ??= new StringBuilder();
+            sb.Append(span);
+            _charBufferIndex = _charsRead;
+
+            return ReadLineStepResult.Continue;
         }
 
         private int ReadIntoBuffer()
@@ -537,6 +536,23 @@ namespace Microsoft.AspNetCore.WebUtilities
             while (_charsRead == 0);
 
             return _charsRead;
+        }
+
+        private readonly struct ReadLineStepResult
+        {
+            public static readonly ReadLineStepResult Done = new ReadLineStepResult(true, null);
+            public static readonly ReadLineStepResult Continue = new ReadLineStepResult(false, null);
+
+            public static ReadLineStepResult FromResult(string value) => new ReadLineStepResult(true, value);
+
+            private ReadLineStepResult(bool completed, string result)
+            {
+                Completed = completed;
+                Result = result;
+            }
+
+            public bool Completed { get; }
+            public string Result { get; }
         }
     }
 }
