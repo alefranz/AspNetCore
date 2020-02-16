@@ -398,6 +398,7 @@ namespace Microsoft.AspNetCore.WebUtilities
         public override string ReadLine()
         {
             StringBuilder sb = null;
+            var consumeLineFeed = false;
 
             while (true)
             {
@@ -407,6 +408,15 @@ namespace Microsoft.AspNetCore.WebUtilities
                     {
                         break;
                     }
+                }
+
+                if (consumeLineFeed)
+                {
+                    if (_charBuffer[_charBufferIndex] == '\n')
+                    {
+                        _charBufferIndex++;
+                    }
+                    break;
                 }
 
                 var span = new Span<char>(_charBuffer, _charBufferIndex, _charsRead - _charBufferIndex);
@@ -441,14 +451,8 @@ namespace Microsoft.AspNetCore.WebUtilities
                         // we where at the end of buffer, we need to read more to check for a line feed to consume
                         sb ??= new StringBuilder();
                         sb.Append(span);
-                        if (ReadIntoBuffer() != 0)
-                        {
-                            if (_charBuffer[_charBufferIndex] == '\n')
-                            {
-                                _charBufferIndex++;
-                            }
-                        }
-                        break;
+                        consumeLineFeed = true;
+                        continue;
                     }
 
                     if (span[index] == '\n')
