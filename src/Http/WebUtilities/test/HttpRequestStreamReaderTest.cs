@@ -194,8 +194,8 @@ namespace Microsoft.AspNetCore.WebUtilities
                 Assert.Equal(string.Empty, data);
             }
 
-            var eol = await action(reader);
-            Assert.Null(eol);
+            var eof = await action(reader);
+            Assert.Null(eof);
         }
 
         [Theory]
@@ -218,8 +218,39 @@ namespace Microsoft.AspNetCore.WebUtilities
             data = await action(reader);
             Assert.Equal("foo", data);
 
-            var eol = await action(reader);
-            Assert.Null(eol);
+            var eof = await action(reader);
+            Assert.Null(eof);
+        }
+
+        [Theory]
+        [MemberData(nameof(ReadLineData))]
+        public static async Task ReadLine_EOF(Func<HttpRequestStreamReader, Task<string>> action)
+        {
+            // Arrange
+            var stream = new MemoryStream();
+            var reader = new HttpRequestStreamReader(stream, Encoding.UTF8);
+
+            // Act & Assert
+            var eof = await action(reader);
+            Assert.Null(eof);
+        }
+
+        [Theory]
+        [MemberData(nameof(ReadLineData))]
+        public static async Task ReadLine_NewLineOnly(Func<HttpRequestStreamReader, Task<string>> action)
+        {
+            // Arrange
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream);
+            writer.Write("\r\n");
+            writer.Flush();
+            stream.Position = 0;
+
+            var reader = new HttpRequestStreamReader(stream, Encoding.UTF8);
+
+            // Act & Assert
+            var empty = await action(reader);
+            Assert.Equal(string.Empty, empty);
         }
 
         [Fact]

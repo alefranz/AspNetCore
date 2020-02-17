@@ -392,7 +392,7 @@ namespace Microsoft.AspNetCore.WebUtilities
                 {
                     if (ReadIntoBuffer() == 0)
                     {
-                        // When 
+                        // reached EOF, we need to return null if we were at EOF from the beginning
                         return sb?.ToString();
                     }
                 }
