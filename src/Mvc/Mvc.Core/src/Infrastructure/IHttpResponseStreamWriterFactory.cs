@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.IO;
+using System.IO.Pipelines;
 using System.Text;
 
 namespace Microsoft.AspNetCore.Mvc.Infrastructure
@@ -18,5 +19,13 @@ namespace Microsoft.AspNetCore.Mvc.Infrastructure
         /// <param name="encoding">The <see cref="Encoding"/>, usually <see cref="Encoding.UTF8"/>.</param>
         /// <returns>A <see cref="TextWriter"/>.</returns>
         TextWriter CreateWriter(Stream stream, Encoding encoding);
+
+        /// <summary>
+        /// Creates a new <see cref="TextWriter"/>.
+        /// </summary>
+        /// <param name="writer">The <see cref="PipeWriter"/>, usually <see cref="Http.HttpResponse.Body"/>.</param>
+        /// <param name="encoding">The <see cref="Encoding"/>, usually <see cref="Encoding.UTF8"/>.</param>
+        /// <returns>A <see cref="TextWriter"/>.</returns>
+        TextWriter CreateWriter(PipeWriter writer, Encoding encoding);
     }
 }

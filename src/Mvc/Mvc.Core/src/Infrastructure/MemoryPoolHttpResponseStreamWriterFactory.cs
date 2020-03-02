@@ -4,6 +4,7 @@
 using System;
 using System.Buffers;
 using System.IO;
+using System.IO.Pipelines;
 using System.Text;
 using Microsoft.AspNetCore.WebUtilities;
 
@@ -71,6 +72,22 @@ namespace Microsoft.AspNetCore.Mvc.Infrastructure
             }
 
             return new HttpResponseStreamWriter(stream, encoding, DefaultBufferSize, _bytePool, _charPool);
+        }
+
+        /// <inheritdoc />
+        public TextWriter CreateWriter(PipeWriter writer, Encoding encoding)
+        {
+            if (writer == null)
+            {
+                throw new ArgumentNullException(nameof(writer));
+            }
+
+            if (encoding == null)
+            {
+                throw new ArgumentNullException(nameof(encoding));
+            }
+
+            return new HttpResponsePipeWriter(writer, encoding);
         }
     }
 }

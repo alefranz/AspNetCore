@@ -233,7 +233,8 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
 
             OnExecuting(viewContext);
 
-            await using (var writer = WriterFactory.CreateWriter(response.Body, resolvedContentTypeEncoding))
+            //await using (var writer = WriterFactory.CreateWriter(response.Body, resolvedContentTypeEncoding))
+            await using (var writer = WriterFactory.CreateWriter(response.BodyWriter, resolvedContentTypeEncoding))
             {
                 var view = viewContext.View;
 
