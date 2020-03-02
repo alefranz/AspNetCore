@@ -4,15 +4,16 @@
 using System;
 using System.Buffers;
 using System.IO;
+using System.IO.Pipelines;
 using System.Text;
 using Microsoft.AspNetCore.WebUtilities;
 
 namespace Microsoft.AspNetCore.Mvc.Infrastructure
 {
     /// <summary>
-    /// An <see cref="IHttpResponseStreamWriterFactory"/> that uses pooled buffers.
+    /// An <see cref="IHttpResponseWriterFactory"/> that uses pooled buffers.
     /// </summary>
-    internal class MemoryPoolHttpResponseStreamWriterFactory : IHttpResponseStreamWriterFactory
+    internal class MemoryPoolHttpResponseStreamWriterFactory : IHttpResponseWriterFactory
     {
         /// <summary>
         /// The default size of buffers <see cref="HttpResponseStreamWriter"/>s will allocate.
@@ -27,42 +28,58 @@ namespace Microsoft.AspNetCore.Mvc.Infrastructure
         /// </remarks>
         public static readonly int DefaultBufferSize = 16 * 1024;
 
-        private readonly ArrayPool<byte> _bytePool;
-        private readonly ArrayPool<char> _charPool;
+        //private readonly ArrayPool<byte> _bytePool;
+        //private readonly ArrayPool<char> _charPool;
 
-        /// <summary>
-        /// Creates a new <see cref="MemoryPoolHttpResponseStreamWriterFactory"/>.
-        /// </summary>
-        /// <param name="bytePool">
-        /// The <see cref="ArrayPool{Byte}"/> for creating <see cref="byte"/> buffers.
-        /// </param>
-        /// <param name="charPool">
-        /// The <see cref="ArrayPool{Char}"/> for creating <see cref="char"/> buffers.
-        /// </param>
-        public MemoryPoolHttpResponseStreamWriterFactory(
-            ArrayPool<byte> bytePool,
-            ArrayPool<char> charPool)
-        {
-            if (bytePool == null)
-            {
-                throw new ArgumentNullException(nameof(bytePool));
-            }
+        ///// <summary>
+        ///// Creates a new <see cref="MemoryPoolHttpResponseStreamWriterFactory"/>.
+        ///// </summary>
+        ///// <param name="bytePool">
+        ///// The <see cref="ArrayPool{Byte}"/> for creating <see cref="byte"/> buffers.
+        ///// </param>
+        ///// <param name="charPool">
+        ///// The <see cref="ArrayPool{Char}"/> for creating <see cref="char"/> buffers.
+        ///// </param>
+        //public MemoryPoolHttpResponseStreamWriterFactory(
+        //    ArrayPool<byte> bytePool,
+        //    ArrayPool<char> charPool)
+        //{
+        //    if (bytePool == null)
+        //    {
+        //        throw new ArgumentNullException(nameof(bytePool));
+        //    }
 
-            if (charPool == null)
-            {
-                throw new ArgumentNullException(nameof(charPool));
-            }
+        //    if (charPool == null)
+        //    {
+        //        throw new ArgumentNullException(nameof(charPool));
+        //    }
 
-            _bytePool = bytePool;
-            _charPool = charPool;
-        }
+        //    _bytePool = bytePool;
+        //    _charPool = charPool;
+        //}
+
+        ///// <inheritdoc />
+        //public TextWriter CreateWriter(Stream stream, Encoding encoding)
+        //{
+        //    if (stream == null)
+        //    {
+        //        throw new ArgumentNullException(nameof(stream));
+        //    }
+
+        //    if (encoding == null)
+        //    {
+        //        throw new ArgumentNullException(nameof(encoding));
+        //    }
+
+        //    return new HttpResponseStreamWriter(stream, encoding, DefaultBufferSize, _bytePool, _charPool);
+        //}
 
         /// <inheritdoc />
-        public TextWriter CreateWriter(Stream stream, Encoding encoding)
+        public TextWriter CreateWriter(PipeWriter writer, Encoding encoding)
         {
-            if (stream == null)
+            if (writer == null)
             {
-                throw new ArgumentNullException(nameof(stream));
+                throw new ArgumentNullException(nameof(writer));
             }
 
             if (encoding == null)
@@ -70,7 +87,7 @@ namespace Microsoft.AspNetCore.Mvc.Infrastructure
                 throw new ArgumentNullException(nameof(encoding));
             }
 
-            return new HttpResponseStreamWriter(stream, encoding, DefaultBufferSize, _bytePool, _charPool);
+            return new HttpResponsePipeWriter(writer, encoding);
         }
     }
 }
