@@ -32,6 +32,45 @@ namespace Microsoft.AspNetCore.WebUtilities
             _encoder = encoding.GetEncoder();
         }
 
+        public override void Write(char value)
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(HttpResponseStreamWriter));
+            }
+
+            if (_charBufferCount == _charBufferSize)
+            {
+                FlushInternal(flushEncoder: false);
+            }
+
+            _charBuffer[_charBufferCount] = value;
+            _charBufferCount++;
+        }
+
+        public override void Write(char[] values, int index, int count)
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(HttpResponseStreamWriter));
+            }
+
+            if (values == null)
+            {
+                return;
+            }
+
+            while (count > 0)
+            {
+                if (_charBufferCount == _charBufferSize)
+                {
+                    FlushInternal(flushEncoder: false);
+                }
+
+                CopyToCharBuffer(values, ref index, ref count);
+            }
+        }
+
         public override void Write(ReadOnlySpan<char> value)
         {
             if (_disposed)
@@ -39,10 +78,75 @@ namespace Microsoft.AspNetCore.WebUtilities
                 throw new ObjectDisposedException(nameof(HttpResponseStreamWriter));
             }
 
-            var length = _encoder.GetByteCount(value, false);
-            var buffer = _writer.GetSpan(length);
-            _encoder.GetBytes(value, buffer, false);
-            _writer.Advance(length);
+            var remaining = value.Length;
+            while (remaining > 0)
+            {
+                if (_charBufferCount == _charBufferSize)
+                {
+                    FlushInternal(flushEncoder: false);
+                }
+
+                var written = CopyToCharBuffer(value);
+
+                remaining -= written;
+                value = value.Slice(written);
+            };
+        }
+
+        public override void Write(string value)
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(HttpResponseStreamWriter));
+            }
+
+            if (value == null)
+            {
+                return;
+            }
+
+            var count = value.Length;
+            var index = 0;
+            while (count > 0)
+            {
+                if (_charBufferCount == _charBufferSize)
+                {
+                    FlushInternal(flushEncoder: false);
+                }
+
+                CopyToCharBuffer(value, ref index, ref count);
+            }
+        }
+
+        public override void WriteLine(ReadOnlySpan<char> value)
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(HttpResponseStreamWriter));
+            }
+
+            Write(value);
+            Write(NewLine);
+        }
+
+        public override Task WriteAsync(char value)
+        {
+            if (_disposed)
+            {
+                return GetObjectDisposedTask();
+            }
+
+            if (_charBufferCount == _charBufferSize)
+            {
+                return WriteAsyncAwaited(value);
+            }
+            else
+            {
+                // Enough room in buffer, no need to go async
+                _charBuffer[_charBufferCount] = value;
+                _charBufferCount++;
+                return Task.CompletedTask;
+            }
         }
 
         public override Task WriteAsync(char[] values, int index, int count)
@@ -78,6 +182,77 @@ namespace Microsoft.AspNetCore.WebUtilities
             _writer.Advance(length);
 
             return Task.CompletedTask;
+        }
+
+        public override Task WriteLineAsync(ReadOnlyMemory<char> value, CancellationToken cancellationToken = default)
+        {
+            if (_disposed)
+            {
+                return GetObjectDisposedTask();
+            }
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return Task.FromCanceled(cancellationToken);
+            }
+
+            if (value.IsEmpty)
+            {
+                return Task.CompletedTask;
+            }
+
+            var remaining = _charBufferSize - _charBufferCount;
+            if (remaining >= value.Length)
+            {
+                // Enough room in buffer, no need to go async
+                CopyToCharBuffer(value.Span);
+                return Task.CompletedTask;
+            }
+            else
+            {
+                return WriteAsyncAwaited(value);
+            }
+        }
+
+        public override Task WriteLineAsync(ReadOnlyMemory<char> value, CancellationToken cancellationToken = default)
+        {
+            if (_disposed)
+            {
+                return GetObjectDisposedTask();
+            }
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return Task.FromCanceled(cancellationToken);
+            }
+
+            if (value.IsEmpty && NewLine.Length == 0)
+            {
+                return Task.CompletedTask;
+            }
+
+            var remaining = _charBufferSize - _charBufferCount;
+            if (remaining >= value.Length + NewLine.Length)
+            {
+                // Enough room in buffer, no need to go async
+                CopyToCharBuffer(value.Span);
+                CopyToCharBuffer(NewLine);
+                return Task.CompletedTask;
+            }
+            else
+            {
+                return WriteLineAsyncAwaited(value);
+            }
+        }
+
+        public override void Flush()
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(HttpResponseStreamWriter));
+            }
+
+            FlushEncoder();
         }
 
         public override Task FlushAsync()
@@ -117,7 +292,7 @@ namespace Microsoft.AspNetCore.WebUtilities
         private async ValueTask FlushInternalAsync()
         {
             FlushEncoder();
-            // await _writer.FlushAsync();
+            // flush??
             await _writer.CompleteAsync();
         }
 
