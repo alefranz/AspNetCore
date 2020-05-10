@@ -26,7 +26,7 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
         private readonly ILogger<ViewComponentResult> _logger;
         private readonly IModelMetadataProvider _modelMetadataProvider;
         private readonly ITempDataDictionaryFactory _tempDataDictionaryFactory;
-        private IHttpResponseStreamWriterFactory _writerFactory;
+        private IHttpResponseWriterFactory _writerFactory;
 
         [Obsolete("This constructor is obsolete and will be removed in a future version.")]
         public ViewComponentResultExecutor(
@@ -45,7 +45,7 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
             HtmlEncoder htmlEncoder,
             IModelMetadataProvider modelMetadataProvider,
             ITempDataDictionaryFactory tempDataDictionaryFactory,
-            IHttpResponseStreamWriterFactory writerFactory)
+            IHttpResponseWriterFactory writerFactory)
         {
             if (mvcHelperOptions == null)
             {
@@ -121,9 +121,9 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
                 response.StatusCode = result.StatusCode.Value;
             }
 
-            _writerFactory ??= context.HttpContext.RequestServices.GetRequiredService<IHttpResponseStreamWriterFactory>();
+            _writerFactory ??= context.HttpContext.RequestServices.GetRequiredService<IHttpResponseWriterFactory>();
 
-            await using (var writer = _writerFactory.CreateWriter(response.Body, resolvedContentTypeEncoding))
+            await using (var writer = _writerFactory.CreateWriter(response.BodyWriter, resolvedContentTypeEncoding))
             {
                 var viewContext = new ViewContext(
                     context,

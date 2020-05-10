@@ -1722,7 +1722,7 @@ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
 
             public TestPageResultExecutor(Func<PageContext, Task> executeAction)
                 : base(
-                    Mock.Of<IHttpResponseStreamWriterFactory>(),
+                    Mock.Of<IHttpResponseWriterFactory>(),
                     Mock.Of<ICompositeViewEngine>(),
                     Mock.Of<IRazorViewEngine>(),
                     Mock.Of<IRazorPageActivator>(),

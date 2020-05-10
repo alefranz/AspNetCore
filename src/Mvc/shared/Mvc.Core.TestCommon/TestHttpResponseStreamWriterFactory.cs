@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.WebUtilities;
 
 namespace Microsoft.AspNetCore.Mvc
 {
-    public class TestHttpResponseStreamWriterFactory : IHttpResponseStreamWriterFactory
+    public class TestHttpResponseStreamWriterFactory : IHttpResponseWriterFactory
     {
         public const int DefaultBufferSize = 16 * 1024;
 

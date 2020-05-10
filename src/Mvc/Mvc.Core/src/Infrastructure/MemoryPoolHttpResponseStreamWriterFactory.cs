@@ -11,9 +11,9 @@ using Microsoft.AspNetCore.WebUtilities;
 namespace Microsoft.AspNetCore.Mvc.Infrastructure
 {
     /// <summary>
-    /// An <see cref="IHttpResponseStreamWriterFactory"/> that uses pooled buffers.
+    /// An <see cref="IHttpResponseWriterFactory"/> that uses pooled buffers.
     /// </summary>
-    internal class MemoryPoolHttpResponseStreamWriterFactory : IHttpResponseStreamWriterFactory
+    internal class MemoryPoolHttpResponseStreamWriterFactory : IHttpResponseWriterFactory
     {
         /// <summary>
         /// The default size of buffers <see cref="HttpResponseStreamWriter"/>s will allocate.

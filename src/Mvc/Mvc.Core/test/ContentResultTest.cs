@@ -21,7 +21,7 @@ namespace Microsoft.AspNetCore.Mvc
     public class ContentResultTest
     {
         private static readonly int DefaultCharacterChunkSize =
-            MemoryPoolHttpResponseStreamWriterFactory.DefaultBufferSize;
+            EncodedHttpResponsePipeWriterFactory.DefaultBufferSize;
 
         [Fact]
         public async Task ContentResult_Response_NullContent_SetsContentTypeAndEncoding()
