@@ -2,11 +2,14 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Buffers;
 using System.IO;
 using System.IO.Pipelines;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Markup;
 
 namespace Microsoft.AspNetCore.WebUtilities
 {
@@ -17,6 +20,7 @@ namespace Microsoft.AspNetCore.WebUtilities
     public class HttpResponsePipeWriter : TextWriter
     {
         private readonly Encoder _encoder;
+        private readonly char[] _singleCharArray;
         private readonly PipeWriter _writer;
 
         public override Encoding Encoding { get; }
@@ -30,6 +34,7 @@ namespace Microsoft.AspNetCore.WebUtilities
             _writer = writer ?? throw new ArgumentNullException(nameof(writer));
             Encoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
             _encoder = encoding.GetEncoder();
+            _singleCharArray = ArrayPool<char>.Shared.Rent(1);
         }
 
         public override void Write(char value)
@@ -136,17 +141,9 @@ namespace Microsoft.AspNetCore.WebUtilities
                 return GetObjectDisposedTask();
             }
 
-            if (_charBufferCount == _charBufferSize)
-            {
-                return WriteAsyncAwaited(value);
-            }
-            else
-            {
-                // Enough room in buffer, no need to go async
-                _charBuffer[_charBufferCount] = value;
-                _charBufferCount++;
-                return Task.CompletedTask;
-            }
+            _singleCharArray[0] = value;
+
+            return WriteAsync(_singleCharArray, 0, 1);
         }
 
         public override Task WriteAsync(char[] values, int index, int count)
@@ -184,7 +181,7 @@ namespace Microsoft.AspNetCore.WebUtilities
             return Task.CompletedTask;
         }
 
-        public override Task WriteLineAsync(ReadOnlyMemory<char> value, CancellationToken cancellationToken = default)
+        public override Task WriteAsync(ReadOnlyMemory<char> value, CancellationToken cancellationToken = default)
         {
             if (_disposed)
             {
@@ -201,17 +198,9 @@ namespace Microsoft.AspNetCore.WebUtilities
                 return Task.CompletedTask;
             }
 
-            var remaining = _charBufferSize - _charBufferCount;
-            if (remaining >= value.Length)
-            {
-                // Enough room in buffer, no need to go async
-                CopyToCharBuffer(value.Span);
-                return Task.CompletedTask;
-            }
-            else
-            {
-                return WriteAsyncAwaited(value);
-            }
+            Write(value.Span);
+
+            return Task.CompletedTask;
         }
 
         public override Task WriteLineAsync(ReadOnlyMemory<char> value, CancellationToken cancellationToken = default)
@@ -231,18 +220,10 @@ namespace Microsoft.AspNetCore.WebUtilities
                 return Task.CompletedTask;
             }
 
-            var remaining = _charBufferSize - _charBufferCount;
-            if (remaining >= value.Length + NewLine.Length)
-            {
-                // Enough room in buffer, no need to go async
-                CopyToCharBuffer(value.Span);
-                CopyToCharBuffer(NewLine);
-                return Task.CompletedTask;
-            }
-            else
-            {
-                return WriteLineAsyncAwaited(value);
-            }
+            Write(value.Span);
+            Write(value.Span);
+
+            return Task.CompletedTask;
         }
 
         public override void Flush()
@@ -253,6 +234,7 @@ namespace Microsoft.AspNetCore.WebUtilities
             }
 
             FlushEncoder();
+            // flush??
         }
 
         public override Task FlushAsync()
