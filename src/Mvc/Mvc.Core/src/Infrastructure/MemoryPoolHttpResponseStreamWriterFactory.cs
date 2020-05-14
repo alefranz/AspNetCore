@@ -28,51 +28,51 @@ namespace Microsoft.AspNetCore.Mvc.Infrastructure
         /// </remarks>
         public static readonly int DefaultBufferSize = 16 * 1024;
 
-        private readonly ArrayPool<byte> _bytePool;
-        private readonly ArrayPool<char> _charPool;
+        //private readonly ArrayPool<byte> _bytePool;
+        //private readonly ArrayPool<char> _charPool;
 
-        /// <summary>
-        /// Creates a new <see cref="MemoryPoolHttpResponseStreamWriterFactory"/>.
-        /// </summary>
-        /// <param name="bytePool">
-        /// The <see cref="ArrayPool{Byte}"/> for creating <see cref="byte"/> buffers.
-        /// </param>
-        /// <param name="charPool">
-        /// The <see cref="ArrayPool{Char}"/> for creating <see cref="char"/> buffers.
-        /// </param>
-        public MemoryPoolHttpResponseStreamWriterFactory(
-            ArrayPool<byte> bytePool,
-            ArrayPool<char> charPool)
-        {
-            if (bytePool == null)
-            {
-                throw new ArgumentNullException(nameof(bytePool));
-            }
+        ///// <summary>
+        ///// Creates a new <see cref="MemoryPoolHttpResponseStreamWriterFactory"/>.
+        ///// </summary>
+        ///// <param name="bytePool">
+        ///// The <see cref="ArrayPool{Byte}"/> for creating <see cref="byte"/> buffers.
+        ///// </param>
+        ///// <param name="charPool">
+        ///// The <see cref="ArrayPool{Char}"/> for creating <see cref="char"/> buffers.
+        ///// </param>
+        //public MemoryPoolHttpResponseStreamWriterFactory(
+        //    ArrayPool<byte> bytePool,
+        //    ArrayPool<char> charPool)
+        //{
+        //    if (bytePool == null)
+        //    {
+        //        throw new ArgumentNullException(nameof(bytePool));
+        //    }
 
-            if (charPool == null)
-            {
-                throw new ArgumentNullException(nameof(charPool));
-            }
+        //    if (charPool == null)
+        //    {
+        //        throw new ArgumentNullException(nameof(charPool));
+        //    }
 
-            _bytePool = bytePool;
-            _charPool = charPool;
-        }
+        //    _bytePool = bytePool;
+        //    _charPool = charPool;
+        //}
 
-        /// <inheritdoc />
-        public TextWriter CreateWriter(Stream stream, Encoding encoding)
-        {
-            if (stream == null)
-            {
-                throw new ArgumentNullException(nameof(stream));
-            }
+        ///// <inheritdoc />
+        //public TextWriter CreateWriter(Stream stream, Encoding encoding)
+        //{
+        //    if (stream == null)
+        //    {
+        //        throw new ArgumentNullException(nameof(stream));
+        //    }
 
-            if (encoding == null)
-            {
-                throw new ArgumentNullException(nameof(encoding));
-            }
+        //    if (encoding == null)
+        //    {
+        //        throw new ArgumentNullException(nameof(encoding));
+        //    }
 
-            return new HttpResponseStreamWriter(stream, encoding, DefaultBufferSize, _bytePool, _charPool);
-        }
+        //    return new HttpResponseStreamWriter(stream, encoding, DefaultBufferSize, _bytePool, _charPool);
+        //}
 
         /// <inheritdoc />
         public TextWriter CreateWriter(PipeWriter writer, Encoding encoding)

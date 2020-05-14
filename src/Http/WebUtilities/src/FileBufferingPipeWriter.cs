@@ -17,7 +17,7 @@ namespace Microsoft.AspNetCore.WebUtilities
     /// <summary>
     /// A <see cref="Stream"/> that buffers content to be written to disk.
     /// </summary>
-    public sealed class FileBufferingPipeWriter : PipeWriter
+    public sealed class FileBufferingPipeWriter : PipeWriter, IAsyncDisposable
     {
         private const int DefaultMemoryThreshold = 32 * 1024; // 32k
         private readonly PipeWriter _pipeWriter;
@@ -69,7 +69,6 @@ namespace Microsoft.AspNetCore.WebUtilities
         internal FileStream FileStream { get; private set; }
 
         internal bool Disposed { get; private set; }
-
 
         private void EnsureFileStream()
         {
@@ -146,6 +145,17 @@ namespace Microsoft.AspNetCore.WebUtilities
         public override ValueTask<FlushResult> FlushAsync(CancellationToken cancellationToken = default)
         {
             return _pipeWriter.FlushAsync(cancellationToken);
+        }
+
+        public Task DrainBufferAsync()
+        {
+            return Task.CompletedTask;
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            // flush?? will it cause chunking?
+            throw new NotImplementedException();
         }
     }
 }

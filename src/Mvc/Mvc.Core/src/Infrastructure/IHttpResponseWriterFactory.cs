@@ -12,13 +12,13 @@ namespace Microsoft.AspNetCore.Mvc.Infrastructure
     /// </summary>
     public interface IHttpResponseWriterFactory
     {
-        /// <summary>
-        /// Creates a new <see cref="TextWriter"/>.
-        /// </summary>
-        /// <param name="stream">The <see cref="Stream"/>, usually <see cref="Http.HttpResponse.Body"/>.</param>
-        /// <param name="encoding">The <see cref="Encoding"/>, usually <see cref="Encoding.UTF8"/>.</param>
-        /// <returns>A <see cref="TextWriter"/>.</returns>
-        TextWriter CreateWriter(Stream stream, Encoding encoding);
+        ///// <summary>
+        ///// Creates a new <see cref="TextWriter"/>.
+        ///// </summary>
+        ///// <param name="stream">The <see cref="Stream"/>, usually <see cref="Http.HttpResponse.Body"/>.</param>
+        ///// <param name="encoding">The <see cref="Encoding"/>, usually <see cref="Encoding.UTF8"/>.</param>
+        ///// <returns>A <see cref="TextWriter"/>.</returns>
+        //TextWriter CreateWriter(Stream stream, Encoding encoding);
 
         /// <summary>
         /// Creates a new <see cref="TextWriter"/>.

@@ -149,13 +149,13 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
                 }
                 else
                 {
-                    await using var bufferingStream = new FileBufferingWriteStream();
+                    await using var bufferingStream = new FileBufferingPipeWriter(response.BodyWriter);
                     await using (var intermediateWriter = _writerFactory.CreateWriter(bufferingStream, resolvedContentTypeEncoding))
                     {
                         viewComponentResult.WriteTo(intermediateWriter, _htmlEncoder);
                     }
 
-                    await bufferingStream.DrainBufferAsync(response.Body);
+                    await bufferingStream.DrainBufferAsync();
                 }
             }
         }

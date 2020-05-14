@@ -9,7 +9,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Markup;
 
 namespace Microsoft.AspNetCore.WebUtilities
 {
@@ -44,13 +43,9 @@ namespace Microsoft.AspNetCore.WebUtilities
                 throw new ObjectDisposedException(nameof(HttpResponseStreamWriter));
             }
 
-            if (_charBufferCount == _charBufferSize)
-            {
-                FlushInternal(flushEncoder: false);
-            }
-
-            _charBuffer[_charBufferCount] = value;
-            _charBufferCount++;
+            _singleCharArray[0] = value;
+            var span = new Span<char>(_singleCharArray, 0, 1);
+            Write(span);
         }
 
         public override void Write(char[] values, int index, int count)
@@ -60,20 +55,13 @@ namespace Microsoft.AspNetCore.WebUtilities
                 throw new ObjectDisposedException(nameof(HttpResponseStreamWriter));
             }
 
-            if (values == null)
+            if (values == null || count == 0)
             {
                 return;
             }
 
-            while (count > 0)
-            {
-                if (_charBufferCount == _charBufferSize)
-                {
-                    FlushInternal(flushEncoder: false);
-                }
-
-                CopyToCharBuffer(values, ref index, ref count);
-            }
+            var value = new Span<char>(values, index, count);
+            Write(value);
         }
 
         public override void Write(ReadOnlySpan<char> value)
@@ -83,19 +71,15 @@ namespace Microsoft.AspNetCore.WebUtilities
                 throw new ObjectDisposedException(nameof(HttpResponseStreamWriter));
             }
 
-            var remaining = value.Length;
-            while (remaining > 0)
+            if (value == null)
             {
-                if (_charBufferCount == _charBufferSize)
-                {
-                    FlushInternal(flushEncoder: false);
-                }
+                return;
+            }
 
-                var written = CopyToCharBuffer(value);
-
-                remaining -= written;
-                value = value.Slice(written);
-            };
+            var length = _encoder.GetByteCount(value, false);
+            var buffer = _writer.GetSpan(length);
+            _encoder.GetBytes(value, buffer, false);
+            _writer.Advance(length);
         }
 
         public override void Write(string value)
@@ -110,17 +94,7 @@ namespace Microsoft.AspNetCore.WebUtilities
                 return;
             }
 
-            var count = value.Length;
-            var index = 0;
-            while (count > 0)
-            {
-                if (_charBufferCount == _charBufferSize)
-                {
-                    FlushInternal(flushEncoder: false);
-                }
-
-                CopyToCharBuffer(value, ref index, ref count);
-            }
+            Write(value.AsSpan());
         }
 
         public override void WriteLine(ReadOnlySpan<char> value)
