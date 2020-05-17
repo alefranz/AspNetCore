@@ -34,7 +34,7 @@ namespace Microsoft.AspNetCore.Mvc.Performance
     public class ViewPerformanceBenchmark : RuntimePerformanceBenchmarkBase
     {
         public ViewPerformanceBenchmark() : base(
-            "~/Views/HelloWorld.cshtml")
+            "~/Views/HelloWorld.cshtml", "~/Views/Over16K.cshtml")
         {
         }
     }
