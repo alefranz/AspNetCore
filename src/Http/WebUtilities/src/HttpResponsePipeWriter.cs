@@ -211,6 +211,9 @@ namespace Microsoft.AspNetCore.WebUtilities
             // flush??
         }
 
+        // Perf: FlushAsync is invoked to ensure any buffered content is asynchronously written to the underlying
+        // response asynchronously. In its absence, the buffer gets synchronously written to the
+        // response as part of the Dispose which has a perf impact.
         public override Task FlushAsync()
         {
             if (_disposed)
@@ -248,8 +251,8 @@ namespace Microsoft.AspNetCore.WebUtilities
         private async ValueTask FlushInternalAsync()
         {
             FlushEncoder();
-            // flush??
-            await _writer.CompleteAsync();
+            await _writer.FlushAsync();
+            _writer.Complete();
         }
 
         private void FlushEncoder()

@@ -152,10 +152,11 @@ namespace Microsoft.AspNetCore.WebUtilities
             return Task.CompletedTask;
         }
 
-        public ValueTask DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
-            // flush?? will it cause chunking?
-            throw new NotImplementedException();
+            // TODO: perf
+            await FlushAsync();
+            Disposed = true;
         }
     }
 }
