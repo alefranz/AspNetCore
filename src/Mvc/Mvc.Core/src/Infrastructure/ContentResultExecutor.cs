@@ -12,12 +12,12 @@ namespace Microsoft.AspNetCore.Mvc.Infrastructure
     {
         private const string DefaultContentType = "text/plain; charset=utf-8";
         private readonly ILogger<ContentResultExecutor> _logger;
-        private readonly IHttpResponseStreamWriterFactory _httpResponseStreamWriterFactory;
+        private readonly IHttpResponseWriterFactory _httpResponsePipeWriterFactory;
 
-        public ContentResultExecutor(ILogger<ContentResultExecutor> logger, IHttpResponseStreamWriterFactory httpResponseStreamWriterFactory)
+        public ContentResultExecutor(ILogger<ContentResultExecutor> logger, IHttpResponseWriterFactory httpResponseStreamWriterFactory)
         {
             _logger = logger;
-            _httpResponseStreamWriterFactory = httpResponseStreamWriterFactory;
+            _httpResponsePipeWriterFactory = httpResponseStreamWriterFactory;
         }
 
         /// <inheritdoc />
@@ -55,7 +55,7 @@ namespace Microsoft.AspNetCore.Mvc.Infrastructure
             {
                 response.ContentLength = resolvedContentTypeEncoding.GetByteCount(result.Content);
 
-                await using (var textWriter = _httpResponseStreamWriterFactory.CreateWriter(response.Body, resolvedContentTypeEncoding))
+                await using (var textWriter = _httpResponsePipeWriterFactory.CreateWriter(response.BodyWriter, resolvedContentTypeEncoding))
                 {
                     await textWriter.WriteAsync(result.Content);
 
