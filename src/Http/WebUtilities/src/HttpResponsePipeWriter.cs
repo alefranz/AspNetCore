@@ -206,7 +206,7 @@ namespace Microsoft.AspNetCore.WebUtilities
             }
 
             FlushEncoder();
-            // TOOD: flush
+            // TOOD: flush?
         }
 
         // Perf: FlushAsync is invoked to ensure any buffered content is asynchronously written to the underlying
@@ -228,7 +228,7 @@ namespace Microsoft.AspNetCore.WebUtilities
             {
                 _disposed = true;
                 await FlushInternalAsync();
-                _writer.Complete();
+                //await _writer.FlushAsync();
             }
 
             await base.DisposeAsync();
@@ -240,8 +240,7 @@ namespace Microsoft.AspNetCore.WebUtilities
             {
                 _disposed = true;
                 FlushEncoder();
-                // TOOD: flush
-                _writer.Complete();
+                // Flush not needed
             }
 
             base.Dispose(disposing);
@@ -255,7 +254,6 @@ namespace Microsoft.AspNetCore.WebUtilities
 
         private void FlushEncoder()
         {
-            // flush encoder
             var empty = new ReadOnlySpan<char>();
             var length = _encoder.GetByteCount(empty, true);
             if (length > 0)
