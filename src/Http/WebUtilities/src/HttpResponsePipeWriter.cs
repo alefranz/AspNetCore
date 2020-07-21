@@ -30,7 +30,8 @@ namespace Microsoft.AspNetCore.WebUtilities
             PipeWriter writer,
             Encoding encoding)
         {
-            _writer = writer ?? throw new ArgumentNullException(nameof(writer));
+            if (writer == null) throw new ArgumentNullException(nameof(writer));
+            _writer = new MinimumChunkingPipeWriter(writer);
             Encoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
             _encoder = encoding.GetEncoder();
             _singleCharArray = ArrayPool<char>.Shared.Rent(1);
@@ -135,7 +136,7 @@ namespace Microsoft.AspNetCore.WebUtilities
             var value = new Span<char>(values, index, count);
             Write(value);
 
-            return Task.CompletedTask;
+            return _writer.FlushAsync().AsTask();
         }
 
         public override Task WriteAsync(string? value)
@@ -150,7 +151,7 @@ namespace Microsoft.AspNetCore.WebUtilities
             _encoder.GetBytes(value, buffer, false);
             _writer.Advance(length);
 
-            return Task.CompletedTask;
+            return _writer.FlushAsync().AsTask();
         }
 
         public override Task WriteAsync(ReadOnlyMemory<char> value, CancellationToken cancellationToken = default)
@@ -172,7 +173,7 @@ namespace Microsoft.AspNetCore.WebUtilities
 
             Write(value.Span);
 
-            return Task.CompletedTask;
+            return _writer.FlushAsync().AsTask();
         }
 
         public override Task WriteLineAsync(ReadOnlyMemory<char> value, CancellationToken cancellationToken = default)
@@ -195,7 +196,8 @@ namespace Microsoft.AspNetCore.WebUtilities
             Write(value.Span);
             Write(NewLine);
 
-            return Task.CompletedTask;
+            //return Task.CompletedTask;
+            return _writer.FlushAsync().AsTask();
         }
 
         public override void Flush()
@@ -228,7 +230,6 @@ namespace Microsoft.AspNetCore.WebUtilities
             {
                 _disposed = true;
                 await FlushInternalAsync();
-                //await _writer.FlushAsync();
             }
 
             await base.DisposeAsync();

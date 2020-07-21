@@ -2,6 +2,9 @@
   "solution": {
     "path": "..\\..\\AspNetCore.sln",
     "projects": [
+      "src\\Http\\WebUtilities\\perf\\Microsoft.AspNetCore.WebUtilities.Performance\\Microsoft.AspNetCore.WebUtilities.Performance.csproj",
+      "src\\Http\\WebUtilities\\src\\Microsoft.AspNetCore.WebUtilities.csproj",
+      "src\\Http\\WebUtilities\\test\\Microsoft.AspNetCore.WebUtilities.Tests.csproj",
       "src\\Mvc\\Mvc.Abstractions\\src\\Microsoft.AspNetCore.Mvc.Abstractions.csproj",
       "src\\Mvc\\Mvc.Abstractions\\test\\Microsoft.AspNetCore.Mvc.Abstractions.Test.csproj",
       "src\\Mvc\\Mvc.Analyzers\\src\\Microsoft.AspNetCore.Mvc.Analyzers.csproj",
