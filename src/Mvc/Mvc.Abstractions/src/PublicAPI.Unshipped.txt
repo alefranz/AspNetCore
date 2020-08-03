@@ -287,6 +287,7 @@ Microsoft.AspNetCore.Mvc.Formatters.OutputFormatterCanWriteContext
 Microsoft.AspNetCore.Mvc.Formatters.OutputFormatterCanWriteContext.OutputFormatterCanWriteContext(Microsoft.AspNetCore.Http.HttpContext! httpContext) -> void
 Microsoft.AspNetCore.Mvc.Formatters.OutputFormatterWriteContext
 Microsoft.AspNetCore.Mvc.Formatters.OutputFormatterWriteContext.OutputFormatterWriteContext(Microsoft.AspNetCore.Http.HttpContext! httpContext, System.Func<System.IO.Pipelines.PipeWriter!, System.Text.Encoding!, System.IO.TextWriter!>! writerFactory, System.Type! objectType, object! object) -> void
+Microsoft.AspNetCore.Mvc.Formatters.OutputFormatterWriteContext.OutputFormatterWriteContext(Microsoft.AspNetCore.Http.HttpContext! httpContext, System.Func<System.IO.Stream!, System.Text.Encoding!, System.IO.TextWriter!>! writerFactory, System.Type! objectType, object! object) -> void
 Microsoft.AspNetCore.Mvc.IActionResult
 Microsoft.AspNetCore.Mvc.IActionResult.ExecuteResultAsync(Microsoft.AspNetCore.Mvc.ActionContext! context) -> System.Threading.Tasks.Task!
 Microsoft.AspNetCore.Mvc.IUrlHelper
@@ -828,7 +829,9 @@ virtual Microsoft.AspNetCore.Mvc.Formatters.OutputFormatterCanWriteContext.Objec
 virtual Microsoft.AspNetCore.Mvc.Formatters.OutputFormatterCanWriteContext.Object.set -> void
 virtual Microsoft.AspNetCore.Mvc.Formatters.OutputFormatterCanWriteContext.ObjectType.get -> System.Type?
 virtual Microsoft.AspNetCore.Mvc.Formatters.OutputFormatterCanWriteContext.ObjectType.set -> void
-virtual Microsoft.AspNetCore.Mvc.Formatters.OutputFormatterWriteContext.WriterFactory.get -> System.Func<System.IO.Pipelines.PipeWriter!, System.Text.Encoding!, System.IO.TextWriter!>!
+virtual Microsoft.AspNetCore.Mvc.Formatters.OutputFormatterWriteContext.PipeWriterFactory.get -> System.Func<System.IO.Pipelines.PipeWriter!, System.Text.Encoding!, System.IO.TextWriter!>?
+virtual Microsoft.AspNetCore.Mvc.Formatters.OutputFormatterWriteContext.PipeWriterFactory.set -> void
+virtual Microsoft.AspNetCore.Mvc.Formatters.OutputFormatterWriteContext.WriterFactory.get -> System.Func<System.IO.Stream!, System.Text.Encoding!, System.IO.TextWriter!>?
 virtual Microsoft.AspNetCore.Mvc.Formatters.OutputFormatterWriteContext.WriterFactory.set -> void
 virtual Microsoft.AspNetCore.Mvc.ModelBinding.BindingSource.CanAcceptDataFrom(Microsoft.AspNetCore.Mvc.ModelBinding.BindingSource! bindingSource) -> bool
 virtual Microsoft.AspNetCore.Mvc.ModelBinding.Metadata.ModelBindingMessageProvider.AttemptedValueIsInvalidAccessor.get -> System.Func<string!, string!, string!>!
