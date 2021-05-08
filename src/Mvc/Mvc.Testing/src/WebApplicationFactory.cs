@@ -8,7 +8,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
-using System.Runtime.Serialization.Json;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.TestHost;
@@ -23,7 +23,7 @@ namespace Microsoft.AspNetCore.Mvc.Testing
     /// </summary>
     /// <typeparam name="TEntryPoint">A type in the entry point assembly of the application.
     /// Typically the Startup or Program classes can be used.</typeparam>
-    public class WebApplicationFactory<TEntryPoint> : IDisposable where TEntryPoint : class
+    public class WebApplicationFactory<TEntryPoint> : IDisposable, IAsyncDisposable where TEntryPoint : class
     {
         private bool _disposed;
         private TestServer _server;
@@ -526,6 +526,45 @@ namespace Microsoft.AspNetCore.Mvc.Testing
                 _host?.StopAsync().Wait();
                 _host?.Dispose();
             }
+
+            _disposed = true;
+        }
+
+        /// <inheritdoc />
+        public async ValueTask DisposeAsync()
+        {
+            await DisposeAsyncCore();
+
+            Dispose(false);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Performs asynchronous application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
+        protected virtual async ValueTask DisposeAsyncCore()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            foreach (var client in _clients)
+            {
+                client.Dispose();
+            }
+
+            foreach (var factory in _derivedFactories)
+            {
+                await factory.DisposeAsync().ConfigureAwait(false);
+            }
+
+            _server?.Dispose();
+            if (_host != null)
+            {
+                await _host.StopAsync().ConfigureAwait(false);
+            }
+            _host?.Dispose();
 
             _disposed = true;
         }

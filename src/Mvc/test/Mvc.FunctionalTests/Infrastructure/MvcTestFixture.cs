@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Globalization;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -9,10 +10,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
+using Xunit;
 
 namespace Microsoft.AspNetCore.Mvc.FunctionalTests
 {
-    public class MvcTestFixture<TStartup> : WebApplicationFactory<TStartup>
+    public class MvcTestFixture<TStartup> : WebApplicationFactory<TStartup>, IAsyncLifetime
         where TStartup : class
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -62,6 +64,16 @@ namespace Microsoft.AspNetCore.Mvc.FunctionalTests
                 CultureInfo.CurrentCulture = originalCulture;
                 CultureInfo.CurrentUICulture = originalUICulture;
             }
+        }
+
+        public Task InitializeAsync()
+        {
+            return Task.CompletedTask;
+        }
+
+        Task IAsyncLifetime.DisposeAsync()
+        {
+            return DisposeAsync().AsTask();
         }
     }
 }

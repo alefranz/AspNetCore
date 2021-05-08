@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -75,6 +76,21 @@ namespace Microsoft.AspNetCore.Mvc.FunctionalTests
             var lifetimeService = (IHostApplicationLifetime) factory.Services.GetService(typeof(IHostApplicationLifetime));
             lifetimeService.ApplicationStopped.Register(() => { callbackCalled = true; });
             factory.Dispose();
+
+            // Assert
+            Assert.True(callbackCalled);
+        }
+
+        [Fact]
+        public async Task TestingInfrastructure_GenericHost_HostShouldStopBeforeDisposeAsync()
+        {
+            // Act
+            using var factory = new CustomizedFactory<GenericHostWebSite.Startup>();
+            var callbackCalled = false;
+
+            var lifetimeService = (IHostApplicationLifetime)factory.Services.GetService(typeof(IHostApplicationLifetime));
+            lifetimeService.ApplicationStopped.Register(() => { callbackCalled = true; });
+            await factory.DisposeAsync();
 
             // Assert
             Assert.True(callbackCalled);
